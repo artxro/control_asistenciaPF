@@ -1,7 +1,7 @@
 {
   "name": "control-asistencia",
   "description": "Control de asitencia empresarial.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Luis Pura",
   "license": "MIT",
   "keywords": [],
@@ -12,19 +12,14 @@
   },
   "scripts": {
     "start": "electron .",
-    "package": "electron-packager . control-asistencia --overwrite --out=packaged --ignore='^/dist$' --prune --platform=linux --arch=x64 --icon=assets/icons/Logo.icns",
-    "package-linux": "electron-packager . control-asistenciaVF --overwrite --asar --platform=linux --arch=x64 --icon=assets/icons/png/LogoInstitucional.png --prune=true --out=../release-builds",
-    "packageDEB": "electron-installer-debian --src ../dist/control-asistencia-linux-x64 --dest ../dist/DEB_Instaler/ --arch amd64",
     "build": "electron-builder build --win --publish never",
     "deploy": "electron-builder build --win --publish always",
-    "compress": "cd .. && tar -zcvf Release/control-asistenciaVF.tar.gz control-asistenciaVF"
+    "compress": "cd .. && tar -zcvf Release/control-asistenciaVF.tar.gz control-asistenciaVF",
+    "package": "electron-packager . control-asistencia --overwrite --out=packaged --ignore='^/dist$' --prune --platform=linux --arch=x64 --icon=assets/icons/Logo.icns"
   },
   "build": {
-    "target": "squirrelWindows ",
+    "target": "nsis ",
     "icon": "/assets/icons/icon.ico",
-    "extraFiles": [
-      "config.js"
-    ],
     "nsis": {
       "perMachine": false,
       "createDesktopShortcut": true,
@@ -46,6 +41,7 @@
     "macaddress": "^0.2.9",
     "min-jquery": "^1.7.0",
     "node-datetime": "^2.1.2",
+    "request": "^2.88.2",
     "sha256": "^0.2.0",
     "utf8": "^3.0.0"
   },

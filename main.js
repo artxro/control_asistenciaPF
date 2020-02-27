@@ -120,6 +120,29 @@ function createConfiginit(confData = null) {
 				log.debug('Carpeta de configuracion: '.cyan + ConfigPATH.yellow);
 				respuesta_json["MainFolder"] = true;
 			})
+
+			if (!fs.existsSync(logFile)){
+				var data =  '############# LOG #############\n' +
+				'\nFecha de creación --> ' + hrReg.magenta + '\n' + '\n***** Espesificaciones del Ususario *****'.green +
+				'\nHostname: '.yellow + String(os.hostname) +
+				'\nUsername: '.yellow + String(os.userInfo().username) +
+				'\nHomeDir: '.yellow + String(os.userInfo().homedir) +
+				'\nPlatform: '.yellow + String(os.platform) +
+				'\nRelease: '.yellow + String(os.release) +
+				'\nArch: '.yellow + String(os.arch) +
+				'\n******************************************'.green + '\n';
+				fs.writeFile(logFile, data, function (err) {
+					if (err) log.error(String(err).red)
+					log.transports.file.file = logFile;
+					log.debug('Log creado: '.cyan + logFile.yellow);
+					respuesta_json["Log"] = true;
+				})
+			}else{
+				log.transports.file.file = logFile;
+				log.debug('Archivo log existe: '.cyan + logFile.yellow);
+				respuesta_json["Log"] = true;logFile
+			}
+			
 			if (!fs.existsSync(ConfigFilejs)){
 				var data = "ping=wshuella.prestamofeliz.com.mx;server=http://wshuella.prestamofeliz.com.mx:9045/WSH.svc";
 				fs.writeFile(ConfigFilejs, data, function (err) {
@@ -155,8 +178,29 @@ function createConfiginit(confData = null) {
 				respuesta_json["User"] = true;
 			}
 		}else{
+			if (!fs.existsSync(logFile)){
+				var data =  '############# LOG #############\n' +
+				'\nFecha de creación --> ' + hrReg.magenta + '\n' + '\n***** Espesificaciones del Ususario *****'.green +
+				'\nHostname: '.yellow + String(os.hostname) +
+				'\nUsername: '.yellow + String(os.userInfo().username) +
+				'\nHomeDir: '.yellow + String(os.userInfo().homedir) +
+				'\nPlatform: '.yellow + String(os.platform) +
+				'\nRelease: '.yellow + String(os.release) +
+				'\nArch: '.yellow + String(os.arch) +
+				'\n******************************************'.green + '\n';
+				fs.writeFile(logFile, data, function (err) {
+					if (err) log.error(String(err).red)
+					log.transports.file.file = logFile;
+					log.debug('Log creado: '.cyan + logFile.yellow);
+					respuesta_json["Log"] = true;
+				})
+			}else{
+				log.transports.file.file = logFile;
+				log.debug('Archivo log existe: '.cyan + logFile.yellow);
+				respuesta_json["Log"] = true;logFile
+			}
 			log.debug('Carpeta de configuracion: '.cyan + ConfigPATH.yellow);
-						if (!fs.existsSync(ConfigFilejs)){
+			if (!fs.existsSync(ConfigFilejs)){
 				var data = "ping=wshuella.prestamofeliz.com.mx;server=http://wshuella.prestamofeliz.com.mx:9045/WSH.svc";
 				fs.writeFile(ConfigFilejs, data, function (err) {
 					if (err) log.error(String(err).red)
@@ -362,7 +406,7 @@ function configWindow() {
 		protocol: 'file:',
 		slashes: true
 	}))
-	configInicialWin.webContents.openDevTools()
+	// configInicialWin.webContents.openDevTools()
 	var menuinit = Menu.buildFromTemplate(menuconfiginit)
 	configInicialWin.setMenu(menuinit)
 	configInicialWin.once('ready-to-show', () => {
@@ -382,18 +426,19 @@ menuTemplate = [{
 				setTimeout(closeLogin, 60000)
 			}
 		}]
-	},
-	{
-		label: 'Ayuda',
-		submenu: [{
-			label: 'Buscar Actualización',
-				click: () => {
-					log.debug('--- Btn Actualizar, Buscando Actualización ---')
-					buscarActualizacion()
-				}
-			}
-		]
 	}
+	// ,
+	// {
+	// 	label: 'Ayuda',
+	// 	submenu: [{
+	// 		label: 'Buscar Actualización',
+	// 			click: () => {
+	// 				log.debug('--- Btn Actualizar, Buscando Actualización ---')
+	// 				buscarActualizacion()
+	// 			}
+	// 		}
+	// 	]
+	// }
 ]
 let mainWindow
 
@@ -410,7 +455,7 @@ function createWindow() {
 		height: 570,
 		icon: path.join(__dirname, '/assets/icons/png/LogoInstitucional.png')
 	})
-	mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
+	// mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
 	// Leer index.html
 	mainWindow.loadURL(url.format({
 		pathname: path.join(__dirname, 'index.html'),
@@ -807,4 +852,4 @@ ipcMain.on('restart_app', () => {
 });
 
 
-// export GH_TOKEN=022a2303a44390a9b9426eae93bd291a22b62571
+// export GH_TOKEN=c7a69186f8b25ba73fe39e1f59d9576b33c238b4

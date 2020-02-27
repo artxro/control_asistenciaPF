@@ -158,7 +158,7 @@
 <br>
 <br>
 	<p id="version"></p>
-	<div id="notification">
+	<div id="notification" class="hidden">
 		<p id="message"></p>
 		<button id="close-button" onClick="closeNotification()">
 			Cerrar
@@ -184,10 +184,10 @@
 
 		ipcRenderer.on('update_available', () => {
 			console.log('Update Avaiable');
+			$('#notification').show()
 			ipcRenderer.removeAllListeners('update_available');
 			message.innerText = 'Nueva actualización disponible, Descargando...';
-			notification.classList.remove('hidden');
-			$('#notification').show()
+			// notification.classList.remove('hidden');
 		});
 		ipcRenderer.on('update_downloaded', () => {
 			console.log('Descargando app');
@@ -198,6 +198,7 @@
 		});
 
 		function closeNotification() {
+			$('#notification').hide()
 			notification.classList.add('hidden');
 			console.log('App notification hidden');
 		}
@@ -222,13 +223,5 @@
 <script>
 	if (window.module) module = window.module;
 </script>
-<script>
-	document.addEventListener("keydown", function (e) {
-		if (e.which === 123) {
-			require('remote').getCurrentWindow().toggleDevTools();
-		} else if (e.which === 116) {
-			location.reload();
-		}
-	});
-</script>
+
 </html>
