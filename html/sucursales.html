@@ -1,0 +1,40 @@
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Sucursales Consultas</title>
+	<link rel="stylesheet" href="../css/skeleton.css">
+	<link rel="stylesheet" href="../css/index.css">
+	<script type="text/javascript" src="../js/index.js"></script>
+</head>
+
+<body onload="getDataConfig()">
+	<div class="container">
+		<h3 align="center">Sucursales</h3>
+
+		<input onclick="obeterSucursales()" class="button-primary" value="Mostrar Sucursal" type="button" style="justify-content: center" id="ObtSuc">
+		<input onclick="configpagesuc()" class="button-primary" value="Nueva Sucursal" type="button" style="justify-content: right" id="newSuc">
+
+		<a></a>
+		<div class="row" id="nombresSuc">
+			<div class="three columns">
+				<label for="firstname" style="margin: 20px">Sucursal</label>
+				<input class="u-full-width"  placeholder="" id="nombreSucursal" type="text">
+			</div>
+			
+			<div class="three columns" id="estadoid">
+				<label style="margin:20px" >Estado:</label>
+				<select class="idest">
+				</select>
+			</div>
+			
+			<input onclick="registrarSucursales()" class="button-primary" value="Registrar Sucursal" type="button" style="justify-content: center;margin: 60px" id="regSuc">
+		</div>
+		<div>
+			<table align="center" border="2" cellpadding="5" cellspacing="10" id="listaSucursales">
+				<tbody></tbody>
+			</table>
+		</div>
+	</div>
+</body>
+</html>

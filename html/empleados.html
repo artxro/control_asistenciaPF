@@ -1,0 +1,404 @@
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Control Asistencia - Préstamo Feliz</title>
+
+	<link rel="stylesheet" href="../assets/css/bootstrap.min.css">
+	<link href="../assets/icons/FontAwesome/css/fontawesome.css" rel="stylesheet">
+	<link href="../assets/icons/FontAwesome/css/brands.css" rel="stylesheet">
+	<link href="../assets/icons/FontAwesome/css/solid.css" rel="stylesheet">
+
+	<script type="text/javascript" src="../js/empleados.js"></script>
+	<script type="text/javascript" src="../js/popper.min.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.2.0/zxcvbn.js"></script>
+	<style>
+		body {
+			margin: 0;
+			font-family: -apple-system, BlinkMacSystemFont, "Inter UI", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+			font-size: 1rem;
+			font-weight: 400;
+			line-height: 1.5;
+			color: #494f55;
+			background-color: #f3f4f5;
+		}
+		h4{
+			padding: 15px 10px 10px 10px;
+		}
+		/* The message box is shown when the user clicks on the password field */
+		#message {
+		display:none;
+		background: #f1f1f1;
+		color: #000;
+		position: relative;
+		padding: 20px;
+		margin-top: 10px;
+		}
+
+		#message p {
+		padding: 10px 35px;
+		font-size: 8px;
+		}
+
+		/* Add a green text color and a checkmark when the requirements are right */
+		.valid {
+		color: green;
+		}
+
+		.valid:before {
+		position: relative;
+		left: -35px;
+		content: "✔";
+		}
+
+		/* Add a red text color and an "x" when the requirements are wrong */
+		.invalid {
+		color: red;
+		}
+
+		.invalid:before {
+		position: relative;
+		left: -35px;
+		content: "✖";
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+			<a style="color: rgb(46, 0, 0)" id="page" href="consulta_emp.html">Consulta Empleados</a><br>
+
+		<br>
+
+		<div id="div-titulo">
+			<h2 id="titleAlta"><strong>Alta Empleados</strong></h5>
+				<div id="message-fail" class="alert alert-danger"></div>
+				<label id="lb1"></label>
+				<label id="lb2"></label>
+				<label id="lb3"></label>
+		</div>
+
+		<form id="form-main">
+
+			<div id="div-nombre">
+				<div class="form-row">
+					<div class="form-group col-md-9">
+						<label for="nombre">Nombre</label>
+						<input type="text" class="form-control" id="inputNombre">
+						<label id="lblNombre"></label>
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group col-md-4">
+						<label for="lastname">Apellido Paterno</label>
+						<input type="text" class="form-control" id="inputAPat">
+						<label id="lblApat"></label>
+					</div>
+					<div class="form-group col-md-1"></div>
+					<div class="form-group col-md-4">
+						<label for="lastname">Apellido Materno</label>
+						<input type="text" class="form-control" id="inputAMat">
+						<label id="lblAMat"></label>
+					</div>
+				</div>
+			</div><br>
+
+			<div id="div-user">
+				<div class="form-row">
+					<div class="form-group col-md-3" id="div-rol">
+							<label class="mr-sm-3">Rol del Empleado:</label>
+							<select class="rol-empleado custom-select mr-sm-3 text-right" id="rol-empleado">
+								<option value="0">--- Seleccione un rol ---</option>
+								<option value="1">GERENTE</option>
+								<option value="2">AUXILIAR</option>
+								<option value="3">AUXILIAR ADMINISTRATIVO</option>
+								<option value="4">PROMOTOR</option>
+								<option value="5">SUPERVISOR DESARROLLO</option>
+								<option value="6">GERENTE ADMINISTRATIVO</option>
+							</select>
+					</div>
+
+					<div class="form-group col-md-2"></div>
+
+					<div id="div-usuario" class="form-group col-md-3">
+						<label class="mr-sm-3">Usuario:</label>
+						<form class="form-inline">
+							<div class="input-group mb-2 mr-sm-2">
+							<div class="input-group-prepend">
+								<div class="input-group-text">@</div>
+							</div>
+							<input type="text" class="form-control" id="inputUsuario" placeholder="Usuario">
+							</div>
+						</form>
+					</div>
+					
+					<div id="div-password" class="form-group col-md-4">
+						<div class="form-group col-md-12">
+							<label for="passwd">Contraseña</label>
+							<input type="password" class="form-control" id="passwd" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" >
+							<div id="message">
+							<label>La contraeña debe contener al menos:</label>
+							<label id="letter" class="invalid">Una letra <b>minúscula</b></label>
+							<label id="capital" class="invalid">Una letra <b>MAYÚSCULA</b></label>
+							<label id="number" class="invalid">Un <b>Número</b></label>
+							<label id="length" class="invalid">Contener <b>8 caractéres</b></label>
+							</div>
+						</div>
+
+						<div class="form-group col-md-12">
+							<label for="lastname">Repita la contraseña</label>
+							<input type="password" class="form-control" id="passwd2">
+						</div>
+						<label id="lbpasswd"></label>
+					</div>
+				</div>
+			</div>		
+			
+			<div id="div-huella" class="d-flex justify-content-center">
+				<div class="form-row">
+					<div class="form-group col-md-12">	
+						
+						<div class="form-group col-md-12">				
+							<br><button id="btnHuella" type="button" class="btn btn-primary btn-lg active">Agregar Huella <i class="fas fa-fingerprint fa-lg"></i></button>
+						</div>
+
+						<div class="form-group col-md-12">
+							<div id="spinners" class="d-flex justify-content-center">
+								<label id="lbHuella"></label>
+								<div id="spinner-info" class="spinner-grow text-primary" role="status">
+									<span class="sr-only">Loading...</span>
+								</div>
+					
+								<div id="spinner-success" class="spinner-grow text-success" role="status">
+									<span class="sr-only">Loading...</span>
+								</div>
+					
+								<div id="spinner-warning" class="spinner-grow text-warning" role="status">
+									<span class="sr-only">Loading...</span>
+								</div>
+					
+								<div id="spinner-danger" class="spinner-grow text-danger" role="status">
+									<span class="sr-only">Loading...</span>
+								</div>
+							</div>
+						</div>
+						
+					</div>
+				</div>
+			</div>
+			</div>
+		</form>
+
+		<div class="d-flex justify-content-center">
+			<div class="form-group col-md-5">
+				<div id="message-info" class="alert alert-info"></div>
+				<div id="message-fail-huella" class="alert alert-danger"></div>
+			</div>
+		</div>
+
+		<div id="horario" class="gray">
+			<h4 align="center">Horario del empleado</h4>
+			<table class="table table-striped">
+				<thead class="thead-light">
+					<tr>
+						<th>Hora</th>
+						<th>Lunes</th>
+						<th>Martes</th>
+						<th>Mi&eacute;rcoles</th>
+						<th>Jueves</th>
+						<th>Viernes</th>
+						<th>S&aacute;bado</th>
+					</tr>
+				</thead>
+				
+				<tbody>
+					<tr>
+						<td>Entrada</td>
+						<td>
+							<input type="time"  id="LunesEntrada" class="form-control" value="09:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="MartesEntrada" class="form-control" value="09:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="MiercolesEntrada" class="form-control" value="09:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="JuevesEntrada" class="form-control" value="09:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="ViernesEntrada" class="form-control" value="09:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="SabadoEntrada" class="form-control" value="09:00:00" max="22:00:00" min="06:00:00">
+						</td>
+					</tr>
+					
+					<tr>
+						<td>Salida</td>
+						<td>
+							<input type="time" id="LunesSalida" class="form-control" value="19:30:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="MartesSalida" class="form-control" value="18:30:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="MiercolesSalida" class="form-control" value="18:30:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="JuevesSalida" class="form-control" value="19:30:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="ViernesSalida" class="form-control" value="18:30:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="SabadoSalida" class="form-control" value="13:30:00" max="22:00:00" min="06:00:00">
+						</td>
+					</tr>
+					
+					<tr>
+						<td>Comida/Salida</td>
+						<td>
+							<input type="time" id="LunesComidaSalida" class="form-control" value="13:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="MartesComidaSalida" class="form-control" value="13:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="MiercolesComidaSalida" class="form-control" value="13:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="JuevesComidaSalida" class="form-control" value="13:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="ViernesComidaSalida" class="form-control" value="13:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="SabadoComidaSalida" class="form-control" value="13:00:00" max="22:00:00" min="06:00:00">
+						</td>
+					</tr>
+					
+					<tr>
+						<td>Comida/Regreso</td>
+						<td>
+							<input type="time" id="LunesComidaRegreso" class="form-control" value="14:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="MartesComidaRegreso" class="form-control" value="14:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="MiercolesComidaRegreso" class="form-control" value="14:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="JuevesComidaRegreso" class="form-control" value="14:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="ViernesComidaRegreso" class="form-control" value="14:00:00" max="22:00:00" min="06:00:00">
+						</td>
+						<td>
+							<input type="time" id="SabadoComidaRegreso" class="form-control" value="14:00:00" max="22:00:00" min="06:00:00">
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="d-flex justify-content-center">
+			<br>
+			<input id="registrarbtn" class="btn btn-primary btn-lg active" value="Registrar" type="button">
+			<br>
+		</div>
+
+	</div>
+</body>
+		
+<script>
+var myInput = document.getElementById("passwd");
+var letter = document.getElementById("letter");
+var capital = document.getElementById("capital");
+var number = document.getElementById("number");
+var length = document.getElementById("length");
+
+var valid_May = false;
+var valid_min = false;
+var valid_num = false;
+var valid_lenght = false;
+
+// When the user clicks on the password field, show the message box
+myInput.onfocus = function() {
+  document.getElementById("message").style.display = "block";
+}
+
+// When the user clicks outside of the password field, hide the message box
+myInput.onblur = function() {
+  document.getElementById("message").style.display = "none";
+}
+
+// When the user starts to type something inside the password field
+myInput.onkeyup = function() {
+  // Validate lowercase letters
+  var lowerCaseLetters = /[a-z]/g;
+  if(myInput.value.match(lowerCaseLetters)) {  
+    letter.classList.remove("invalid");
+    letter.classList.add("valid");
+	valid_min = true;
+  } else {
+    letter.classList.remove("valid");
+    letter.classList.add("invalid");
+	valid_min = false;
+  }
+  
+  // Validate capital letters
+  var upperCaseLetters = /[A-Z]/g;
+  if(myInput.value.match(upperCaseLetters)) {  
+    capital.classList.remove("invalid");
+    capital.classList.add("valid");
+	valid_May = true;
+  } else {
+    capital.classList.remove("valid");
+    capital.classList.add("invalid");
+	valid_May = false;
+  }
+
+  // Validate numbers
+  var numbers = /[0-9]/g;
+  if(myInput.value.match(numbers)) {  
+    number.classList.remove("invalid");
+    number.classList.add("valid");
+	valid_num = true;
+  } else {
+    number.classList.remove("valid");
+    number.classList.add("invalid");
+	valid_num = false;
+  }
+  
+  // Validate length
+  if(myInput.value.length >= 8) {
+    length.classList.remove("invalid");
+    length.classList.add("valid");
+	valid_lenght = true;
+  } else {
+    length.classList.remove("valid");
+    length.classList.add("invalid");
+	valid_lenght = false;
+  }
+
+  if(valid_May == true && valid_min == true && valid_num == true && valid_lenght == true ) passwdValid = true;
+}
+</script>
+<script>
+	if (typeof module === 'object') {
+		window.module = module;
+		module = undefined;
+	}
+</script>
+<script src="../js/scanner/scripts/es6-shim.js"></script>
+<script src="../js/scanner/scripts/websdk.client.bundle.min.js"></script>
+<script src="../js/scanner/scripts/fingerprint.sdk.min.js"></script>
+<script src="../js/scanner/scanner.js"></script>
+<script>
+	if (window.module) module = window.module;
+</script>
+</html>

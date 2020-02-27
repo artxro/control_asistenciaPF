@@ -1,0 +1,120 @@
+.invisible {
+	visibility: hidden;
+}
+
+body {
+	font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+	color: rgb(0, 0, 0);
+	background-color: #ebebeb;
+	text-align: center;
+	font-size: 15px;
+}
+
+h3 {
+	margin-top: 2rem;
+}
+
+
+h4 {
+	text-align: center
+}
+
+h2 {
+	padding: 0;
+	margin: 0;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+#close {
+	color: white;
+	opacity: 0.7;
+	position: absolute;
+	bottom: 20px;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 12px;
+	text-decoration: none;
+}
+
+.menu_bar {
+	display:none;
+}
+
+
+header {
+	width: 100%;
+}
+
+header nav {
+	background:#021f36;
+	z-index:1000;
+	max-width: auto;
+	width:auto;
+	margin:20px auto;
+}
+
+header nav ul {
+	list-style:none;
+}
+
+header nav ul li {
+	display:inline-block;
+	position: relative;
+}
+
+header nav ul li:hover {
+	background:#08365c;	
+	color:#fff;
+}
+
+header nav ul li a {
+	color:#fff;
+	display:block;
+	text-decoration:none;
+	padding: 20px;
+}
+
+header nav ul li a span {
+	margin-right:10px;
+}
+
+header nav ul li:hover .children {
+	display:block;
+}
+
+header nav ul li .children {
+	display: none;
+	background:#011826;
+	position: absolute;
+	width: 150%;
+	z-index:1000;
+}
+
+header nav ul li .children li {
+	display:block;
+	overflow: hidden;
+	border-bottom: 1px solid rgba(2, 20, 48, 0.493);
+}
+
+header nav ul li .children li a {
+	display: block;
+}
+
+header nav ul li .children li a span {
+	float: right;
+	position: relative;
+	top:3px;
+	margin-right:0;
+	margin-left:10px;
+}
+
+header nav ul li .caret {
+	position: relative;
+	top:3px;
+	margin-left:10px;
+	margin-right:0px;
+}
+
