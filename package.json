@@ -35,7 +35,6 @@
     "cryptr": "^4.0.2",
     "dateformat": "^3.0.3",
     "dns": "^0.2.2",
-    "electron": "^6.0.5",
     "electron-log": "^3.0.7",
     "electron-notifications": "^1.0.0",
     "electron-reload": "^1.5.0",
