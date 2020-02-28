@@ -20,6 +20,7 @@ const request = require('request');
 const Cyr = require('cryptr');
 const readline = require('readline');
 
+const dateTime = require('node-datetime');
 require('electron-reload')(__dirname); // Desarrollo stuff Actualizacion de codigo automatica en cambios 
 
 
@@ -114,6 +115,8 @@ function requestPOST(metodo, parametros, timeout) {
 function createConfiginit(confData = null) {
 	var respuesta_json = {"MainFolder":false, "ConfigSuc":false, "ConfigServ":false, "Log":false, "User":false};
 	try {
+		log.debug('Start config');
+		log.debug('1 - Checking Main Folder:', ConfigPATH);
 		if (!fs.existsSync(ConfigPATH)) {	// check main path config
 			mkdirp(ConfigPATH, function (err) {
 				if (err) log.error(String(err).red + '\nNo existe y no se pudo crear la carpeta de configuración'.red);
@@ -122,6 +125,8 @@ function createConfiginit(confData = null) {
 			})
 
 			if (!fs.existsSync(logFile)){
+				const dt = dateTime.create()
+				const hrReg = dt.format('m/d/y H:M')
 				var data =  '############# LOG #############\n' +
 				'\nFecha de creación --> ' + hrReg.magenta + '\n' + '\n***** Espesificaciones del Ususario *****'.green +
 				'\nHostname: '.yellow + String(os.hostname) +
@@ -178,7 +183,10 @@ function createConfiginit(confData = null) {
 				respuesta_json["User"] = true;
 			}
 		}else{
+			log.debug('2 - Checking Main Folder:', ConfigPATH);
 			if (!fs.existsSync(logFile)){
+				const dt = dateTime.create()
+				const hrReg = dt.format('m/d/y H:M')
 				var data =  '############# LOG #############\n' +
 				'\nFecha de creación --> ' + hrReg.magenta + '\n' + '\n***** Espesificaciones del Ususario *****'.green +
 				'\nHostname: '.yellow + String(os.hostname) +
@@ -237,9 +245,8 @@ function createConfiginit(confData = null) {
 			respuesta_json["MainFolder"] = true;
 		}
 	} catch (e) {
-		clearTimeout(createFiles)
 		log.error(String(e).red)
-		errorConfig('Hubo un error con la configuracion de la aplicación')
+		// errorConfig('Hubo un error con la configuracion de la aplicación')
 	}
 		
 	return new Promise(respuesta => {
@@ -394,7 +401,7 @@ function configWindow() {
 			nodeIntegrationInWorker: true,
 			webviewTag: true,
 			nodeIntegration: true,
-			preload: path.join(app.getAppPath(), 'js/index.js')
+			// preload: path.join(app.getAppPath(), 'js/index.js')
 		},
 		modal: true,
 		show: false,
@@ -406,7 +413,7 @@ function configWindow() {
 		protocol: 'file:',
 		slashes: true
 	}))
-	// configInicialWin.webContents.openDevTools()
+	configInicialWin.webContents.openDevTools()
 	var menuinit = Menu.buildFromTemplate(menuconfiginit)
 	configInicialWin.setMenu(menuinit)
 	configInicialWin.once('ready-to-show', () => {

@@ -83,6 +83,7 @@
 		const ConfigPATH = os.homedir + '/.config/Control-Asistencia';
 		const ConfigFile = ConfigPATH + '/config';
 		const logFile = ConfigPATH + '/app.log'
+		const ConfigFilejs = ConfigPATH + '/conect.conf';
 
 		log.debug('Redirigiendo log'.cyan + ' ---> '.magenta + logFile.yellow)
 		log.transports.file.file = logFile
