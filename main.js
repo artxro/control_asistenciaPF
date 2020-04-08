@@ -413,7 +413,7 @@ function configWindow() {
 		protocol: 'file:',
 		slashes: true
 	}))
-	configInicialWin.webContents.openDevTools()
+	// configInicialWin.webContents.openDevTools()
 	var menuinit = Menu.buildFromTemplate(menuconfiginit)
 	configInicialWin.setMenu(menuinit)
 	configInicialWin.once('ready-to-show', () => {
