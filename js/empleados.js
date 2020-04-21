@@ -407,6 +407,17 @@ async function getElementstoReg(parametros_) {
 					$("#inputUsuario").css("border-color", "");
 					parametros_[9].value = reg_userNickname;
 				}
+
+				if(usernamevalido == false){
+					$("#inputUsuario").css("border-color", "red");
+					$('#inputUsuariolbl').text('Debe escoger un usuario diferente.');
+					$('#inputUsuariolbl').css("color", "red");
+					log.debug('Usuario no valido...');
+					parametros_ = null;
+					boolreturn[2] = false;
+				}else{
+					boolreturn[2] = true;
+				}
 	
 				if(String(reg_passwd) == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' ){
 					camposEmpty += ', Contraseña';
@@ -481,17 +492,6 @@ async function getElementstoReg(parametros_) {
 			$('#message-fail-huella').hide();
 			parametros_[4].value = JSON.stringify(huellas_wsq);
 			boolreturn[1] = true;
-		}
-
-		if(usernamevalido == false){
-			$("#inputUsuario").css("border-color", "red");
-			$('#inputUsuariolbl').text('Debe escoger un usuario diferente.');
-			$('#inputUsuariolbl').css("color", "red");
-			log.debug('Usuario no valido...');
-			parametros_ = null;
-			boolreturn[2] = false;
-		}else{
-			boolreturn[2] = true;
 		}
 		
 		if(boolreturn[0] == true && boolreturn[1] == true && boolreturn[2] == true){
