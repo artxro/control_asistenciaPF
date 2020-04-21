@@ -39,7 +39,7 @@ try {
 		output: process.stdout,
 		console: false
 	});    
-	try{				
+	try{
 		readInterface.on('line', function (line) {
 			let [confP, confS] = line.split(';');
 			let [x, IPP] = confP.split('=');

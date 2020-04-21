@@ -9,6 +9,7 @@ const $ = require('jquery');
 const log = require('electron-log');
 const colors = require('colors');
 const fs = require('fs');
+const filesize = require("filesize"); 
 const path = require('path');
 const mkdirp = require('mkdirp');
 const url = require('url');
@@ -111,13 +112,18 @@ function requestPOST(metodo, parametros, timeout) {
 	}
 }
 
+function getFilesizeInBytes(filename) {
+    var stats = fs.statSync(filename)
+    var fileSizeInBytes = stats["size"]
+    return fileSizeInBytes
+}
 //---------------------------------------- Config ----------------------------------------------
 function createConfiginit(confData = null) {
-	var respuesta_json = {"MainFolder":false, "ConfigSuc":false, "ConfigServ":false, "Log":false, "User":false};
+	var respuesta_json = {"MainFolder":false, "ConfigSuc":false, "ConfigServ":false, "Log":false, "User":false, "envialog":false};
 	try {
 		log.debug('Start config');
-		log.debug('1 - Checking Main Folder:', ConfigPATH);
 		if (!fs.existsSync(ConfigPATH)) {	// check main path config
+			log.debug('1 - Checking Main Folder:', ConfigPATH);
 			mkdirp(ConfigPATH, function (err) {
 				if (err) log.error(String(err).red + '\nNo existe y no se pudo crear la carpeta de configuración'.red);
 				log.debug('Carpeta de configuracion: '.cyan + ConfigPATH.yellow);
@@ -203,9 +209,31 @@ function createConfiginit(confData = null) {
 					respuesta_json["Log"] = true;
 				})
 			}else{
+				var logsize = getFilesizeInBytes(logFile);
+				var filestat = fs.statSync(logFile)
+				var fileSizeInMb = filesize(filestat.size, {round: 0});
+
+				let [size, label] = fileSizeInMb.split(' ');
+
+				log.debug('Tamaño actual del log:'.magenta, logsize, 'kB');
+				log.debug('Tamaño actual del log:'.magenta, fileSizeInMb);
+
+				if(label == 'MB'){
+					log.debug('Archivo Log en MB!');
+					if(size > 20) {
+						log.debug('Archivo de log muy grande'.red);
+						respuesta_json["envialog"] = true
+					}else{
+						log.debug('Archivo de log OK'.green);
+					}
+				}else{
+					log.debug('Archivo Log en kB!');
+					log.debug('Archivo de log OK'.green);
+				}
+				
 				log.transports.file.file = logFile;
 				log.debug('Archivo log existe: '.cyan + logFile.yellow);
-				respuesta_json["Log"] = true;logFile
+				respuesta_json["Log"] = true;
 			}
 			log.debug('Carpeta de configuracion: '.cyan + ConfigPATH.yellow);
 			if (!fs.existsSync(ConfigFilejs)){
@@ -462,7 +490,7 @@ function createWindow() {
 		height: 570,
 		icon: path.join(__dirname, '/assets/icons/png/LogoInstitucional.png')
 	})
-	mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
+	// mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
 	// Leer index.html
 	mainWindow.loadURL(url.format({
 		pathname: path.join(__dirname, 'index.html'),
@@ -553,7 +581,7 @@ function empleados() {
 	}))
 	var menu = Menu.buildFromTemplate(menuEmpleados)
 	empleadoswin.setMenu(menu)
-	empleadoswin.webContents.openDevTools()
+	// empleadoswin.webContents.openDevTools()
 	// empleados.setMenuBarVisibility(false)
 	empleadoswin.once('ready-to-show', () => {
 		empleados_open = true;
@@ -598,7 +626,7 @@ function conEmpleados() {
 	}))
 	var menu = Menu.buildFromTemplate(menuConEmpleados)
 	conEmpleadoswin.setMenu(menu)
-	conEmpleadoswin.webContents.openDevTools()
+	// conEmpleadoswin.webContents.openDevTools()
 	// empleados.setMenuBarVisibility(false)
 	conEmpleadoswin.once('ready-to-show', () => {
 		conEmpleadoswin.show()
@@ -750,44 +778,58 @@ async function validateConfig(){
 		const statusFS = await createConfiginit();
 		log.debug('FS status:', statusFS);
 
-		if(statusFS["ConfigServ"] == true) {
-			log.debug('Servidor configFile ->', ConfigFilejs);
-			try {
-				const readInterface = readline.createInterface({
-					input: fs.createReadStream(ConfigFilejs),
-					output: process.stdout,
-					console: false
-				});
-		
+		if(statusFS["envialog"] == true){
+			macaddress.one(function (err, mac) {
+				const versionApp = app.getVersion();		
+				log.debug("Version de la app:", versionApp);
+				log.debug("MacAddress del equipo:", mac);
+				log.debug("Enviando log");
+				// ENVIR LOG
+				log.debug("Borrando log");
+				fs.unlinkSync(logFile);
+				app.relaunch();
+				app.quit();
+			});
+		}else{
+			if(statusFS["ConfigServ"] == true) {
+				log.debug('Servidor configFile ->', ConfigFilejs);
 				try {
-					readInterface.on('line', function (line) {
-						let [confP, confS] = line.split(';');
-						let [x, IPP] = confP.split('=');
-						let [z, IPS] = confS.split('=');
-						urlP = IPP;
-						urlL = IPS;
-						log.info('IP del Pruebas Internet: ', urlP.yellow);
-						log.info('IP del Servidor: ', urlL.yellow);			
-						start();
-					});	
+					const readInterface = readline.createInterface({
+						input: fs.createReadStream(ConfigFilejs),
+						output: process.stdout,
+						console: false
+					});
+			
+					try {
+						readInterface.on('line', function (line) {
+							let [confP, confS] = line.split(';');
+							let [x, IPP] = confP.split('=');
+							let [z, IPS] = confS.split('=');
+							urlP = IPP;
+							urlL = IPS;
+							log.info('IP del Pruebas Internet: ', urlP.yellow);
+							log.info('IP del Servidor: ', urlL.yellow);			
+							start();
+						});	
+					} catch (e) {
+						log.error(String(e).red);
+						log.silly('');
+						urlL = null;
+						urlP = null;
+						errorConfig('No se pudo leer la configuracion de la aplicación');
+					}
 				} catch (e) {
 					log.error(String(e).red);
+					log.info('[-] ERROR al obtener la configuracio,, la aplicaicon se reiniciará');
 					log.silly('');
-					urlL = null;
-					urlP = null;
 					errorConfig('No se pudo leer la configuracion de la aplicación');
 				}
-			} catch (e) {
-				log.error(String(e).red);
-				log.info('[-] ERROR al obtener la configuracio,, la aplicaicon se reiniciará');
-				log.silly('');
-				errorConfig('No se pudo leer la configuracion de la aplicación');
 			}
+			if(statusFS["Log"] == true) {
+				log.transports.file.file = logFile;
+				log.debug('Regirigiendo log...');
+			}	
 		}
-		if(statusFS["Log"] == true) {
-			log.transports.file.file = logFile;
-			log.debug('Regirigiendo log...');
-		}	
 	}catch(e){
 		errorConfig('No se pudo leer la configuracion de la aplicación');
 		log.error(String(e));

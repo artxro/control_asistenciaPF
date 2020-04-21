@@ -80,7 +80,7 @@ $(document).ready(async function () {
     log.debug('');
     log.debug('Empresa: '.blue + empresaID.yellow + ' Sucursal: '.blue + sucursalID.yellow)
     log.debug('');
-    log.debug('Main Window '.magenta + '--> '.yellow + hrReg);
+    log.debug('------------------------------------------------: Main Window '.magenta + '--> '.yellow + hrReg);
 
     try {
         fpd = new FingerprintSdkDevice();
@@ -541,6 +541,7 @@ function hideElements() {
     $('#message-info').hide()
     $('#message-fail').hide()
     $('#message-success').hide()
+    $('#message-warning').hide()
     spinnersAction(null)
 }
 

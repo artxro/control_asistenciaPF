@@ -44,6 +44,7 @@
     "electron-reload": "^1.5.0",
     "electron-updater": "^4.0.6",
     "file-encryptor": "^0.1.1",
+    "filesize": "^6.1.0",
     "fs": "0.0.1-security",
     "is-base64": "^0.1.0",
     "jquery": "^3.4.1",

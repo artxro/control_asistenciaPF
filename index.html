@@ -47,6 +47,8 @@
 
 <body>
 
+	<br><button id="btnreload" type="button" class="btn btn-primary btn-lg active" onclick="reload();" style="position: absolute; right: 80;"><i class="fas fa-sync-alt"></i></button>
+		
 	<div class="container">
 
 		<br>
@@ -116,6 +118,7 @@
 			<div id="message-success" class="alert alert-success"></div>
 			<div id="message-fail" class="alert alert-danger"></div>
 			<div id="message-info" class="alert alert-info"></div>
+			<div id="message-warning" class="alert alert-warning"></div>
 		</div>
 
 		<div id="spinners" class="d-flex justify-content-center">
@@ -213,6 +216,21 @@
 	if (typeof module === 'object') {
 		window.module = module;
 		module = undefined;
+	}
+
+	function reload(extra = ''){
+		log.debug("Reiniciando app...".yellow);
+		$('#spinner-warning').show();
+		$('#spinner-info').hide();
+		$('#message-info').hide();
+		$('#message-warning').show();
+		$('#message-warning').html("<strong>Reiniciando...</strong>\u231B " + extra)
+		$("#btnreload").html('<i class="fas fa-sync-alt fa-2x fa-spin"></i>');
+
+		setTimeout(() => {
+			$('#spinner-warning').show();
+			location.reload();
+		}, 1500);
 	}
 </script>
 <script src="js/scanner/scripts/es6-shim.js"></script>
