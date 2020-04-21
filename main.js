@@ -487,7 +487,7 @@ function createWindow() {
 			nodeIntegration: true //Habilita comunicacion entre index.js y main.js (ipc)
 		},
 		width: 1024,
-		height: 590,
+		height: 610,
 		icon: path.join(__dirname, '/assets/icons/png/LogoInstitucional.png')
 	})
 	// mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador

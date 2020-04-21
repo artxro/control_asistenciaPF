@@ -345,13 +345,13 @@ async function getElementstoReg(parametros_) {
 					boolreturn[0] = true;
 				}
 
-				if(bool_user == false){
-					camposEmpty += ', Usuario';
-					$("#inputUsuario").css("border-color", "red");
-				}else{
-					$("#inputUsuario").css("border-color", "");
-					parametros_[9].value = reg_apellidoP;
-				}
+				// if(bool_user == false){
+				// 	camposEmpty += ', Usuario';
+				// 	$("#inputUsuario").css("border-color", "red");
+				// }else{
+				// 	$("#inputUsuario").css("border-color", "");
+				// 	parametros_[9].value = reg_apellidoP;
+				// }
 			}
 	
 		}else{
