@@ -41,6 +41,7 @@ var sucursalID;
 var huella;
 var macAddress;
 
+var usernamevalido = false;
 
 var urlL=''
 const logFile = ConfigPATH + '/app.log'
@@ -205,7 +206,7 @@ function hideElements(){
 }
 
 // Request POST Template
-function requestPOST(metodo, parametros, timeout, timeout_r=1000) {
+function requestPOST(metodo, parametros, timeout, timeout_r=1000, debug=true) {
     const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
 					 \n\t<s:Body>\
 					 \n\t\t<' + metodo + ' xmlns="http://tempuri.org/">'
@@ -224,8 +225,8 @@ function requestPOST(metodo, parametros, timeout, timeout_r=1000) {
             '>')
     }
 
-    const xml = xmlBody_I + xmlAdded + xmlBody_F
-    log.debug(xml.yellow)
+	const xml = xmlBody_I + xmlAdded + xmlBody_F
+	if(debug == true) log.debug(xml.yellow)
 
     request({
         url: urlL,
@@ -237,19 +238,19 @@ function requestPOST(metodo, parametros, timeout, timeout_r=1000) {
         body: xml,
         timeout: timeout
     }, function (error, response, body) {
-        log.debug(body)
+        if(debug == true) log.debug(body)
         if(response.statusCode == 200){
             const etiquetaResult_I = '<' + metodo + 'Result' + '>'
             const etiquetaResult_F = '</' + metodo + 'Result' + '>'
             let [x, tmp] = body.split(etiquetaResult_I)
             let [resp, y] = tmp.split(etiquetaResult_F)
-            retun_ = resp
+			retun_ = resp
         }
     })
 
     return new Promise(respuesta => {
         setTimeout(() => {
-            log.debug('Respuesta: ' + retun_)
+            // if(debug == true) log.debug('Respuesta: ' + retun_)
             respuesta(retun_)
         }, timeout_r);
     });
@@ -260,7 +261,7 @@ function requestPOST(metodo, parametros, timeout, timeout_r=1000) {
 async function getElementstoReg(parametros_) {
 	try{
 		log.debug('Obteniedo elementos para el registro'.blue);
-		let boolreturn = [false,false]  // booleano [datos, huella]
+		let boolreturn = [false,false, false]  // booleano [datos, huella, username]
 		const dic_params = {1 : "idempresa", 2 : "idSucursal", 3 : "mac", 4 : "idDedo", 5 : "huella", 6 : "aPAT", 
 							7 : "aMAT", 8 : "nombre", 9 : "jsonString", 10 : "usuario", 11 : "password", 12 : "rol"} 
 		
@@ -337,6 +338,8 @@ async function getElementstoReg(parametros_) {
 					$('#message-fail').html('<i class="fas fa-ban"></i> <strong> * </strong> Debe llenar los siguientes campos <strong>' + camposEmpty + ' </strong>');			
 					$('#message-fail').show();
 					parametros_ = null;
+					$("#passwd").val("");
+					$("#passwd2").val("");
 				}else{
 					$('#message-fail').hide();
 					boolreturn[0] = true;
@@ -371,7 +374,8 @@ async function getElementstoReg(parametros_) {
 				parametros_ = null;
 	
 			}else{
-				log.debug('Campos incompletos detectados');
+				log.debug('Usuario Priv ---:'.yellow);
+
 				if (bool_valnombre == false) {
 					camposEmpty += ', Nombre';
 					$("#inputNombre").css("border-color", "red");
@@ -457,6 +461,8 @@ async function getElementstoReg(parametros_) {
 					$('#message-fail').show();
 					camposEmpty = '';
 					parametros_ = null;
+					$("#passwd").val("");
+					$("#passwd2").val("");
 				}else{
 					$('#message-fail').hide();			
 					camposEmpty = '';
@@ -468,6 +474,7 @@ async function getElementstoReg(parametros_) {
 		if(status_huella == false){
 			$('#message-fail-huella').html("Debe agregar la huella antes de hacer el registro")
 			$('#message-fail-huella').show();
+			log.debug('No se registró la huella previamente...');
 			parametros_ = null;
 		}else{
 			$('#message-fail-huella').html("")
@@ -475,8 +482,18 @@ async function getElementstoReg(parametros_) {
 			parametros_[4].value = JSON.stringify(huellas_wsq);
 			boolreturn[1] = true;
 		}
+
+		if(usernamevalido == false){
+			$("#inputUsuario").css("border-color", "red");
+			$('#inputUsuariolbl').text('Debe escoger un usuario diferente.');
+			$('#inputUsuariolbl').css("color", "red");
+			log.debug('Usuario no valido...');
+			parametros_ = null;
+		}else{
+			boolreturn[2] = true;
+		}
 		
-		if(boolreturn[0] == true && boolreturn[1] == true){
+		if(boolreturn[0] == true && boolreturn[1] == true && boolreturn[2] == true){
 			return new Promise(respuesta => {
 				setTimeout(() => {
 					log.debug('Respuesta: '.red + JSON.stringify(parametros_))
@@ -494,6 +511,8 @@ async function getElementstoReg(parametros_) {
 
 	}catch(e){
 		log.error(String(e).red);
+		$("#passwd").val("");
+		$("#passwd2").val("");
 	}
 }
 function getHorario() {
@@ -675,6 +694,10 @@ async function RegistrarUsuario(){
 				log.debug('\nError al procesar y validar la huella'.red)
 				setTimeout('location.reload()', 1600); // Relaod Page
 			}else{
+				setTimeout(() => {
+					location.reload();
+					alert("Error al conectar al servidor. Code:", respuesta);
+				}, 5000);
 				let [Rusr, Rhuella, Rhorario, Rupriv] = respuesta.split(',');
 
 				let [name1, respuestaUsr] = Rusr.split(':');
@@ -693,10 +716,13 @@ async function RegistrarUsuario(){
 				}
 			}
 		} catch (e) {
-			log.error("Error al leer respuesta del servidor\n" + String(e).red)
+			log.error("Error al leer respuesta del servidor\n" + String(e).red);
+			alert("Error al registrar, intente de nuevo y revise los campos.");
 		}
 	}else{
 		log.error('Campos vacios, no se procede al registro'.red);
+		$("#passwd").val("");
+		$("#passwd2").val("");
 	}
 }
 
@@ -1553,7 +1579,42 @@ function clearWtime(){
 	$('#lb').text('')
 }
 
+// ------------------------------------- BUSCAR USERNAME ----------------------------------------------------
+async function buscarUsername(username){
 
+	const parametros_ = [
+		{
+			param: 'username',
+			value: username
+		}
+	]
+	const timeout = 1000
+	const metodo = 'BuscaUsername'
+
+	if(parametros_ != null){
+		try {
+			const respuesta = await requestPOST(metodo, parametros_, timeout, 1000, debug=false);
+	
+			if(respuesta == 1){
+				log.debug('Usuario:', username, "Ya existe, debe escojer otro...");
+				$("#inputUsuario").css("border-color", "red");
+				$('#inputUsuariolbl').text('Este usuario ya existe');
+				$('#inputUsuariolbl').css("color", "red");
+				usernamevalido = false;
+			}else{
+				$("#inputUsuario").css("border-color", "green");
+				$('#inputUsuariolbl').text('');
+				$('#inputUsuariolbl').css("color", "green");
+				usernamevalido = true;
+			}
+			
+		} catch (e) {
+			log.error("Error al leer respuesta del servidor\n" + String(e).red)
+		}
+	}else{
+		log.error('Campos vacios, no se procede al registro'.red);
+	}
+}
 
 
 
@@ -2008,4 +2069,54 @@ function getDataConfig(){
 	}catch(e){
 		log.error(e.red)
 	}
+}
+
+
+
+
+
+
+// status del sensor
+sensorstatcount = 0
+firstdisconnected = false
+function statusSensor(stat){
+    log.debug('Estatus del Sensor:'.magenta, stat);
+
+    // CODIGOS DE ESTATUS
+    // 1 - Proceso iniciado
+    // 2 - Sensor Conectado
+    // 3 - Sensor Desconectado
+    // 4 - Error en la comunicacion
+    
+    switch(stat){
+        case 1:
+            log.debug('FingerPrint Device Iniciado...');
+            break;
+        case 2:
+            log.debug("Scan your finger");
+            break;
+        case 3:
+            log.debug("Device disconnected");
+            messageStatus('danger', 'Escaner no detectado ', ' Valide que su escaner de huellas está conectado 🚨');
+            spinnersAction("spinner-info")
+        
+            if (firstdisconnected == false){
+                log.debug("Device disconnected - 1");
+                firstdisconnected = true;
+            }else{
+                // ipc.send('statusSensor', "El Sensor se ha desconectado");
+            }
+            break;
+        case 4:
+            log.debug("Communinication Failed");
+            // if(sensorstatcount >= 4){
+            //     sensorstatcount=0;
+            //     ipc.send('statusSensor', 'No se detecta ningun sensor conectado, favor de conectar uno.');
+            // }
+            // sensorstatcount += 1;
+            break;
+        default:
+            bresk;
+
+    }
 }

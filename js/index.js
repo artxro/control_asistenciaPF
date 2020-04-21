@@ -233,8 +233,8 @@ function requestPOST(metodo, parametros, timeout, timeout_r = 1000) {
 
     const xml = xmlBody_I + xmlAdded + xmlBody_F
     // log.debug(xml.yellow)
-    log.debug('metodo', metodo)
-    log.debug('url', urlL)
+    log.debug('metodo'.cyan, metodo)
+    log.debug('url'.cyan, urlL)
 
     request({
         url: urlL,
@@ -246,9 +246,9 @@ function requestPOST(metodo, parametros, timeout, timeout_r = 1000) {
         body: xml,
         timeout: 3000
     }, function (error, response, body) {
-        log.debug(error)
-        log.debug(body)
-        log.debug(response)
+        // log.debug(error)
+        log.debug(body.yellow)
+        // log.debug(response)
         if (response.statusCode == 200) {
             const etiquetaResult_I = '<' + metodo + 'Result' + '>'
             const etiquetaResult_F = '</' + metodo + 'Result' + '>'
@@ -330,6 +330,7 @@ async function validarHuella(taco) {
 }
 
 async function registraAccion() {
+    log.debug("****************** REGISTRO ******************".yellow);
     const timeout = 2000
     var hora = "00:00";
     var metodo = 'ConsultaEstadosHTML'
@@ -356,20 +357,18 @@ async function registraAccion() {
             log.debug('OBTENIENDO HORA'.magenta)
             try {
                 hora = await getHora(respuesta);
-                if(hora!=null) bool_hora_internet= true;
-                log.debug(hora.magenta)
+                if(hora != null) bool_hora_internet= true;
+                log.debug(hora.magenta);
             } catch (e) {
                 log.debug('Error al Obtener la hora desde la web'.red)
                 log.debug(String(e).red)
             }
-
-            log.silly('\n')
-            log.silly(hora)
-            log.silly(bool_hora_internet)
-            log.silly('\n')
-            
+        
             var metodo = 'Registro'
             if (bool_hora_internet == true) {
+
+
+
                 var parametros = [{
                         param: 'idusuario',
                         value: reg_user
@@ -383,71 +382,70 @@ async function registraAccion() {
                         value: hora
                     }
                 ]
-                var respuesta = await requestPOST(metodo, parametros, timeout, 1000)
+                var respuesta = await requestPOST(metodo, parametros, 800, 1000)
                 try {
-                    if (respuesta == 'Error del proceso') {
+                    if (respuesta == 'true') {
+                        messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
+                        spinnersAction("spinner-success")
+                        log.debug('Registro exitoso 😄, Hora: ' + hora.green)
+                        setTimeout('location.reload()', 2500); // Relaod Page
+                    } else {
                         messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
                         spinnersAction("spinner-danger")
-                        log.debug('\nError al procesar y validar la huella'.red)
-                        setTimeout('location.reload()', 1600); // Relaod Page
-                    } else {
-                        if (respuesta == 'true') {
-                            messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
-                            spinnersAction("spinner-success")
-                            log.debug('\nRegistro exitoso 😄, Hora: ' + hora.green)
-                            setTimeout('location.reload()', 1600); // Relaod Page
-                        } else {
-                            messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
-                            spinnersAction("spinner-danger")
-                            log.debug('\nError al procesar y validar la huella'.red)
-                            setTimeout('location.reload()', 1600); // Relaod Page
-                        }
+                        log.debug('Error al procesar y validar la huella'.red)
+                        setTimeout('location.reload()', 2500); // Relaod Page
                     }
+
                 } catch (e) {
                     log.error("Error al leer respuesta del servidor" + String(e).red)
+                    messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+                    spinnersAction("spinner-danger")
+                    setTimeout('location.reload()', 1600); // Relaod Page
                 }
             } else {
+                hora = await getHora(respuesta);
                 if (bool_hora_internet == false) {
-                    const dt = dateTime.create();
-                    hora = dt.format('H:M');
-                    var parametros = [{
-                            param: 'idusuario',
-                            value: reg_user
-                        },
-                        {
-                            param: 'tipoReg',
-                            value: registro
-                        },
-                        {
-                            param: 'hrReg',
-                            value: hora
-                        }
-                    ]
-                    var respuesta = await requestPOST(metodo, parametros, timeout, 1000)
-                    try {
-                        if (respuesta == 'Error del proceso') {
-                            messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
-                            spinnersAction("spinner-danger")
-                            log.debug('\nError al procesar y validar la huella'.red)
-                            setTimeout('location.reload()', 1600); // Relaod Page
-                        } else {
-                            if (respuesta == 'true') {
-                                messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
-                                spinnersAction("spinner-success")
-                                log.debug('\nRegistro exitoso 😄, Hora: ' + hora.green)
-                                setTimeout('location.reload()', 1600); // Relaod Page
-                            } else {
+                    if(hora != null){
+                        const dt = dateTime.create();
+                        hora = dt.format('H:M');
+                        var parametros = [{
+                                param: 'idusuario',
+                                value: reg_user
+                            },
+                            {
+                                param: 'tipoReg',
+                                value: registro
+                            },
+                            {
+                                param: 'hrReg',
+                                value: hora
+                            }
+                        ]
+                        var respuesta = await requestPOST(metodo, parametros, timeout, 1000)
+                        try {
+                            if (respuesta == 'Error del proceso') {
                                 messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
                                 spinnersAction("spinner-danger")
                                 log.debug('\nError al procesar y validar la huella'.red)
                                 setTimeout('location.reload()', 1600); // Relaod Page
+                            } else {
+                                if (respuesta == 'true') {
+                                    messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
+                                    spinnersAction("spinner-success")
+                                    log.debug('\nRegistro exitoso 😄, Hora: ' + hora.green)
+                                    setTimeout('location.reload()', 1600); // Relaod Page
+                                } else {
+                                    messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+                                    spinnersAction("spinner-danger")
+                                    log.debug('\nError al procesar y validar la huella'.red)
+                                    setTimeout('location.reload()', 1600); // Relaod Page
+                                }
                             }
+                        } catch (e) {
+                            log.error("Error al leer respuesta del servidor" + String(e).red)
                         }
-                    } catch (e) {
-                        log.error("Error al leer respuesta del servidor" + String(e).red)
                     }
                 } else {
-        
                     messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
                     spinnersAction("spinner-danger")
                     log.debug('\nError al procesar y validar la huella'.red)
@@ -465,64 +463,61 @@ async function registraAccion() {
 
 // -------------------------- Get Hora ------------------------------------
 function getHora(respuesta) {
+    const dt = dateTime.create();
+    hrReg = dt.format('H:M');
+
     const re = /([0-2]{1}[0-9]{1}\:[0-6]{1}[0-9]{1}:[0-6]{1}[0-9]{1})/
     var hrR = null;
-    const command = 'curl --insecure -v --max-time 3000 https://www.worldtimeserver.com' + respuesta;
-    log.debug(command.magenta);
+    const urlHora = 'https://www.worldtimeserver.com' + respuesta;
+    // const command = 'curl --insecure -v --max-time 3000 https://www.worldtimeserver.com' + respuesta;
+    log.debug(urlHora.magenta);
 
     try{
-            log.debug('ejecutando comando')
-            exec(command, function (error, stdout, stderr) {
-                var horaObtenida = re.exec(stdout)
-                var horaRT = horaObtenida[0]
-                log.debug(horaRT.yellow);
-                let [hr, min, seg] = horaRT.split(':')
-                hrR = hr + ":" + min
-                log.debug('Hora obtenida desde la web ----> ' + hora + ' Hora Local: ' + hrReg)
-            })
-            exec(command, function (error, stdout, stderr) {
-                var horaObtenida = re.exec(stdout)
-                var horaRT = horaObtenida[0]
-                log.debug(horaRT.yellow);
-                let [hr, min, seg] = horaRT.split(':')
-                hrR = hr + ":" + min
-                log.debug('Hora obtenida desde la web ----> ' + hora + ' Hora Local: ' + hrReg)
-            })
+        $.get(urlHora, function( data ) {
+            text = data;
+            var horaObtenida = re.exec(text);
+            var horaRT = horaObtenida[0];
+            let [hr, min, seg] = horaRT.split(':');
+            hrR = hr + ":" + min;
+            log.debug('Hora obtenida desde la web ----> ' + horaRT + ' Hora Local: ' + hrReg);
+        });
     }catch(e){
         log.error(String(e).red)
     }
 
     return new Promise(respuesta => {
         setTimeout(() => {
-            exec(command, function (error, stdout, stderr) {
-                var horaObtenida = re.exec(stdout)
-                var horaRT = horaObtenida[0]
-                log.debug(horaRT.yellow);
-                let [hr, min, seg] = horaRT.split(':')
-                hrR = hr + ":" + min
-                log.debug('Hora obtenida desde la web ----> ' + hora + ' Hora Local: ' + hrReg)
-            })
+            if(hrR == null){
+                $.get(urlHora, function( data ) {
+                    text = data;
+                    var horaObtenida = re.exec(text)
+                    var horaRT = horaObtenida[0]
+                    // log.debug(horaRT.yellow);
+                    let [hr, min, seg] = horaRT.split(':')
+                    hrR = hr + ":" + min
+                    log.debug('Hora obtenida desde la web ----> ' + hora + ' Hora Local: ' + hrReg)
+                });
+            }
             respuesta(hrR)
         }, 2000);
     });
 }
 
-
 // ------------------------------Animated stuff---------------------------------------
 function buttonClick(tipo) {
-    log.debug('\n-------------------------------------------------------------------------------');
+    log.debug('\n--------------------------------------------------------------------------------------------------------------------');
 
     const dt = dateTime.create();
     hrReg = dt.format('H:M');
 
     log.debug('Boton Registro: ' + tipo);
     registro = tipo;
-    log.debug('Tipo de registro: ' + String(registro).yellow + ' ' + hrReg.blue);
+    log.debug('Tipo de registro: ' + String(registro).yellow + ' HORA LOCAL ->' + hrReg.blue);
+    
+    fpdStart() // Detenccion de huellas activado
 
     messageStatus('info', 'Obteniendo Huella ', ' Coloque su dedo sobre el escaner 👆');
     spinnersAction("spinner-info")
-    fpdStart() // Detenccion de huellas activado
-
     // //ControlAccesoHuella(tipo)
 
     // $('#' + tipo).prop("disabled", true);
@@ -591,5 +586,51 @@ function messageStatus(type, strong, normal) {
         $('#message-info').html('<i class="fas fa-fingerprint"></i> <strong>  ' + strong + '</strong> ' + normal)
         $('#message-info').show()
         hrReg = '00:00'
+    }
+}
+
+
+// status del sensor
+sensorstatcount = 0
+firstdisconnected = false
+function statusSensor(stat){
+    log.debug('Estatus del Sensor:'.magenta, stat);
+
+    // CODIGOS DE ESTATUS
+    // 1 - Proceso iniciado
+    // 2 - Sensor Conectado
+    // 3 - Sensor Desconectado
+    // 4 - Error en la comunicacion
+    
+    switch(stat){
+        case 1:
+            log.debug('FingerPrint Device Iniciado...');
+            break;
+        case 2:
+            log.debug("Scan your finger");
+            break;
+        case 3:
+            log.debug("Device disconnected");
+            messageStatus('danger', 'Escaner no detectado ', ' Valide que su escaner de huellas está conectado 🚨');
+            spinnersAction("spinner-info")
+        
+            if (firstdisconnected == false){
+                log.debug("Device disconnected - 1");
+                firstdisconnected = true;
+            }else{
+                // ipc.send('statusSensor', "El Sensor se ha desconectado");
+            }
+            break;
+        case 4:
+            log.debug("Communinication Failed");
+            // if(sensorstatcount >= 4){
+            //     sensorstatcount=0;
+            //     ipc.send('statusSensor', 'No se detecta ningun sensor conectado, favor de conectar uno.');
+            // }
+            // sensorstatcount += 1;
+            break;
+        default:
+            bresk;
+
     }
 }

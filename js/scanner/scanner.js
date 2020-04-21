@@ -10,22 +10,22 @@ const currentFormat = Fingerprint.SampleFormat.Compressed;
 
 var FingerprintSdkDevice = (function () {
     function FingerprintSdkDevice() {
-        log.info('FingerPrint device iniciado');
+        statusSensor(1);
         var _instance = this;
         this.operationToRestart = null;
         this.acquisitionStarted = false;
         this.sdk = new Fingerprint.WebApi;
         this.sdk.onDeviceConnected = function (e) {
             // Detects if the deveice is connected for which acquisition started
-            log.info("Scan your finger");
+            statusSensor(2);
         };
         this.sdk.onDeviceDisconnected = function (e) {
             // Detects if device gets disconnected - provides deviceUid of disconnected device
-            log.verbose("Device disconnected");
+            statusSensor(3);
         };
         this.sdk.onCommunicationFailed = function (e) {
             // Detects if there is a failure in communicating with U.R.U web SDK
-            log.info("Communinication Failed")
+            statusSensor(4)
         };
         this.sdk.onSamplesAcquired = function (s) {
             // Sample acquired event triggers this function
@@ -33,7 +33,7 @@ var FingerprintSdkDevice = (function () {
         };
         this.sdk.onQualityReported = function (e) {
             // Quality of sample aquired - Function triggered on every sample acquired
-                log.info(Fingerprint.QualityCode[(e.quality)]);
+                log.info("Calidad de FMD:", Fingerprint.QualityCode[(e.quality)]);
         }
 
     }
@@ -92,14 +92,13 @@ function sampleAcquired(s){
             const decodedData = JSON.parse(Fingerprint.b64UrlToUtf8(sampleData));
             const huella = Fingerprint.b64UrlTo64(decodedData.Data);
 
-            log.debug('Huella Obtenida');
+            log.debug('\n--------- Huella Obtenida -------------'.magenta);
 
             if(enrollment == true){
                 faltantes -= 1;
                 if(count == 3){
                     huellas_wsq["4"].Huella = huella;                    
-                    log.debug(JSON.stringify(huellas_wsq).cyan + '\nHuellas obtenidas: ' + count );
-
+                    log.debug('Huellas obtenidas: ' + count );
                     onStop();
                     status_huella = true
                     // Huella obtenida
@@ -111,16 +110,20 @@ function sampleAcquired(s){
                     switch(count){
                         case 1:
                             huellas_wsq["1"].Huella = huella;
+                            log.debug('Huellas obtenidas: ' + count );
+                            $('#message-info').html("Coloque<strong> " + faltantes +" veces </strong>el dedo sobre el sensor de huellas 👆")
                             break;
                         case 2:
                                 huellas_wsq["2"].Huella = huella;
+                                log.debug('Huellas obtenidas: ' + count );
+                                $('#message-info').html("Coloque<strong> " + faltantes +" veces </strong>el dedo sobre el sensor de huellas 👆")
                                 break;
                         case 3:
                             huellas_wsq["3"].Huella = huella;
+                            log.debug('Huellas obtenidas: ' + count );
+                            $('#message-info').html("Coloque<strong> " + faltantes +" vez más </strong>el dedo sobre el sensor de huellas 👆")
                             break;
                         }
-                    log.debug(JSON.stringify(huellas_wsq).yellow + '\nHuellas obtenidas: ' + count );
-                    $('#message-info').html("Coloque<strong> " + faltantes +" veces </strong>el dedo sobre el sensor de huellas 👆")
                 }
                 log.debug('Tipo de adquicision: ' + enrollment);
             }else{

@@ -10,11 +10,15 @@ const fs = require('fs')
 const base64 = require('base-64')
 const hash = require('sha256')
 const exec = require('child_process').exec
-const FolderMAINPATH = os.homedir + '/.config/Control-Acceso-WAC'
+const FolderMAINPATH = os.homedir + '/.config/Control-Asistencia'
 const ConfigFilePath = FolderMAINPATH + '/config'
-const userPATH = os.homedir + '/.config/Control-Acceso-WAC/user'
+const userPATH = os.homedir + '/.config/Control-Asistencia/user'
 const rde = base64.decode('MGJsaXZpYXQzIw==')
 const cry = new Cry(rde)
+
+const ConfigPATH = os.homedir + '/.config/Control-Asistencia';
+const ConfigFile = ConfigPATH + '/config';
+const UserFile = ConfigPATH + '/user';
 
 const ConfigFilejs = ConfigPATH + '/conect.conf';
 var empresaID
@@ -23,7 +27,7 @@ var huella
 var macAdd
 
 
-
+const urlL = 'http://wshuella.prestamofeliz.com.mx:9045/WSH.svc'
 
 
 
@@ -514,6 +518,7 @@ function MostrarListaEmpleados() {
 			</ObtenerUsuarios>\
 		</s:Body>\
 		</s:Envelope>'
+		log.info(regUsr)
 	request({
 		url: urlL,
 		method: "POST",
@@ -523,6 +528,7 @@ function MostrarListaEmpleados() {
 		},
 		body: regUsr
 	}, function (error, response, body) {
+		log.debug(body)
 		try {
 			let [name, resp1] = body.split('<ObtenerUsuariosResult>')
 			let [respuesta, name22] = resp1.split('</ObtenerUsuariosResult>')

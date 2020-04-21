@@ -462,7 +462,7 @@ function createWindow() {
 		height: 570,
 		icon: path.join(__dirname, '/assets/icons/png/LogoInstitucional.png')
 	})
-	// mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
+	mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
 	// Leer index.html
 	mainWindow.loadURL(url.format({
 		pathname: path.join(__dirname, 'index.html'),
@@ -553,7 +553,7 @@ function empleados() {
 	}))
 	var menu = Menu.buildFromTemplate(menuEmpleados)
 	empleadoswin.setMenu(menu)
-	// empleadoswin.webContents.openDevTools()
+	empleadoswin.webContents.openDevTools()
 	// empleados.setMenuBarVisibility(false)
 	empleadoswin.once('ready-to-show', () => {
 		empleados_open = true;
@@ -598,6 +598,8 @@ function conEmpleados() {
 	}))
 	var menu = Menu.buildFromTemplate(menuConEmpleados)
 	conEmpleadoswin.setMenu(menu)
+	conEmpleadoswin.webContents.openDevTools()
+	// empleados.setMenuBarVisibility(false)
 	conEmpleadoswin.once('ready-to-show', () => {
 		conEmpleadoswin.show()
 	})
@@ -727,7 +729,21 @@ ipcMain.on('config', (event, arg) => {
 	app.quit()
 })
 
+ipcMain.on('statusSensor', (event, arg) => {
+	log.debug('MAIN - sensor status');
 
+	errorSensor(arg);
+
+	// try {
+	// 	if (fs.existsSync(ConfigFile)) {
+	// 		fs.unlinkSync(UserFile)
+	// 	}
+	// } catch (e) {
+	// 	log.error(e)
+	// }
+	// app.relaunch();
+	// app.quit();
+})
 
 async function validateConfig(){
 	try{
@@ -781,6 +797,9 @@ async function validateConfig(){
 //----------------------------------------- App funtions escencials ------------------------------------//
 app.on('ready', () => {
 	validateConfig();
+	// login()
+	// empleadxos();
+
 })
 app.on('window-all-closed', () => {
 	try {
@@ -833,6 +852,19 @@ function errorConfig(details) {
 	})
 }
 
+function errorSensor(details) {
+	const options = {
+		type: 'question',
+		buttons: ['Cerrar'],
+		defaultId: 0,
+		title: 'Control de Asistencia PF',
+		message: 'Sensor Status',
+		detail: details,
+	}
+	dialog.showMessageBox(null, options, (response) => {
+		log.debug('Opcion Elegida:'.magenta, response);
+	})
+}
 //----------------------------------- AUTOUPDATER SECCION -----------------------------------
 function buscarActualizacion() {
 	log.debug('Version:', app.getVersion());
@@ -857,6 +889,7 @@ autoUpdater.on('update-downloaded', () => {
 ipcMain.on('restart_app', () => {
 	autoUpdater.quitAndInstall();
 });
+
 
 
 // export GH_TOKEN=c7a69186f8b25ba73fe39e1f59d9576b33c238b4

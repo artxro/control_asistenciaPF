@@ -126,11 +126,12 @@
 						<label class="mr-sm-3">Usuario:</label>
 						<form class="form-inline">
 							<div class="input-group mb-2 mr-sm-2">
-							<div class="input-group-prepend">
-								<div class="input-group-text">@</div>
+								<div class="input-group-prepend">
+									<div class="input-group-text">@</div>
+								</div>
+								<input type="text" class="form-control" id="inputUsuario" placeholder="">							
 							</div>
-							<input type="text" class="form-control" id="inputUsuario" placeholder="Usuario">
-							</div>
+						<label id="inputUsuariolbl"></label>
 						</form>
 					</div>
 					
@@ -318,6 +319,7 @@
 		
 <script>
 
+var usernamevalid = document.getElementById("inputUsuario");
 var confirmPASSWD = document.getElementById("passwd2");
 var myInput = document.getElementById("passwd");
 var letter = document.getElementById("letter");
@@ -342,6 +344,16 @@ myInput.onblur = function() {
 
 // When the user starts to type something inside the password field
 myInput.onkeyup = function() {
+
+	const username = $('#passwd').val();
+	if(username != ''){
+		valid_May == false;
+		valid_min == false; 
+	 	valid_num == false; 
+	  	valid_lenght == false; 
+		passwdValid = false;
+	}
+
   // Validate lowercase letters
   var lowerCaseLetters = /[a-z]/g;
   if(myInput.value.match(lowerCaseLetters)) {  
@@ -412,6 +424,19 @@ confirmPASSWD.onkeyup = function() {
 	}
 
 }
+
+// When the user starts to type something inside the password field
+usernamevalid.onkeyup = function() {
+	const username = $('#inputUsuario').val();
+	if(username != ''){
+		buscarUsername(username)
+	}else{
+		$('#inputUsuariolbl').text('Debe escoger un usuario');
+		$('#inputUsuariolbl').css("color", "red");
+	}
+}
+
+
 </script>
 <script>
 	if (typeof module === 'object') {
