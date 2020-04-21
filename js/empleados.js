@@ -300,7 +300,7 @@ async function getElementstoReg(parametros_) {
 		var camposEmpty = '';
 		if(usertype == false){
 			log.debug('Usuario Normal');
-			if(bool_valnombre == false && bool_valapellidoPat == false  && bool_valapellidoMat == false){
+			if(bool_valnombre == false && bool_valapellidoPat == false  && bool_valapellidoMat == true){
 				log.debug('Todos los campos incompletos')
 				$('#message-fail').html('<i class="fas fa-ban"></i> <strong> * </strong> Debe llenar todos los campos del formulario');
 				$('#message-fail').show();
@@ -309,7 +309,7 @@ async function getElementstoReg(parametros_) {
 				$("#inputAMat").css("border-color", "red");
 				parametros_ = null;
 			}else{
-				log.debug('Campos incompletos detectados');
+				log.debug('Campos incompletos detenctando');
 				if (bool_valnombre == false) { 
 					camposEmpty += ', Nombre';
 					$("#inputNombre").css("border-color", "red");
@@ -489,6 +489,7 @@ async function getElementstoReg(parametros_) {
 			$('#inputUsuariolbl').css("color", "red");
 			log.debug('Usuario no valido...');
 			parametros_ = null;
+			boolreturn[2] = false;
 		}else{
 			boolreturn[2] = true;
 		}
