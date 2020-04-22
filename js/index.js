@@ -570,6 +570,7 @@ function messageStatus(type, strong, normal) {
     if (String(type) == 'success') {
         $('#message-fail').hide()
         $('#message-info').hide()
+        $('#message-danger').hide()
         $('#message-success').html("<strong>" + strong + "</strong> " + normal)
         $('#message-success').show()
         hrReg = '00:00'
@@ -577,6 +578,7 @@ function messageStatus(type, strong, normal) {
     if (String(type) == 'fail') {
         $('#message-success').hide()
         $('#message-info').hide()
+        $('#message-danger').hide()
         $('#message-fail').html('<i class="fas fa-ban"></i> <strong>  ' + strong + '</strong> ' + normal)
         $('#message-fail').show()
         hrReg = '00:00'
@@ -584,8 +586,17 @@ function messageStatus(type, strong, normal) {
     if (String(type) == 'info') {
         $('#message-success').hide()
         $('#message-fail').hide()
+        $('#message-danger').hide()
         $('#message-info').html('<i class="fas fa-fingerprint"></i> <strong>  ' + strong + '</strong> ' + normal)
         $('#message-info').show()
+        hrReg = '00:00'
+    }
+    if (String(type) == 'danger') {
+        $('#message-success').hide()
+        $('#message-fail').hide()
+        $('#message-info').hide()
+        $('#message-danger').html('<i class="fas fa-fingerprint"></i> <strong>  ' + strong + '</strong> ' + normal)
+        $('#message-danger').show()
         hrReg = '00:00'
     }
 }
@@ -609,12 +620,12 @@ function statusSensor(stat){
             break;
         case 2:
             log.debug("Scan your finger");
-            messageStatus('spinner-info', 'Escaner Conectado ', ' ☝ puede registrarse ahora');
+            messageStatus('info', 'Escaner Conectado ', ' ☝ puede registrarse ahora');
             setTimeout("spinnersAction('null')", 1000)
             break;
         case 3:
             log.debug("Device disconnected");
-            messageStatus('spinner-danger', 'Escaner no detectado ', ' Valide que su escaner de huellas está conectado 🚨');
+            messageStatus('danger', 'Escaner no detectado ', ' Valide que su escaner de huellas está conectado 🚨');
             spinnersAction("spinner-danger")
         
             if (firstdisconnected == false){
