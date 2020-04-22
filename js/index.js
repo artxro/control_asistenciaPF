@@ -431,7 +431,7 @@ async function registraAccion() {
                         value: hora
                     }
                 ]
-                var respuesta = await requestPOST(metodo, parametros, timeout, 1000)
+                var respuesta = await requestPOST(metodo, parametros, timeout, 500)
                 try {
                     if (respuesta == 'true') {
                         messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
@@ -472,7 +472,7 @@ async function registraAccion() {
                                 value: hora
                             }
                         ]
-                        var respuesta = await requestPOST(metodo, parametros, timeout, 1000)
+                        var respuesta = await requestPOST(metodo, parametros, timeout, 500)
                         try {
                             if (respuesta == 'Error del proceso') {
                                 messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
@@ -544,7 +544,7 @@ function getHora(respuesta) {
     return new Promise(respuesta => {
         setTimeout(() => {
             respuesta(hrR)
-        }, 2900);
+        }, 2200);
     });
 }
 
