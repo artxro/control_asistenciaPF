@@ -839,14 +839,15 @@ async function validateConfig(){
 //----------------------------------------- App funtions escencials ------------------------------------//
 app.on('ready', () => {
 	validateConfig();
-	// login()
-	// empleadxos();
 
 })
 app.on('window-all-closed', () => {
 	try {
 		if (fs.existsSync(UserFile)) {
 			fs.unlinkSync(UserFile)
+		}
+		if (fs.existsSync(ConfigFilejs)) {
+			fs.unlinkSync(ConfigFilejs)
 		}
 	} catch (e) {
 		log.info('')
