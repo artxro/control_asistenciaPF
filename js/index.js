@@ -214,7 +214,7 @@ function asyncConfig() {
 
 
 // -------------------------- Metodos POST ------------------------------------
-function requestPOST(metodo, parametros, timeout, timeout_r = 1500) {
+function requestPOST(metodo, parametros, timeout, timeout_r = 2000) {
     const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
 					 \n\t<s:Body>\
 					 \n\t\t<' + metodo + ' xmlns="http://tempuri.org/">'
@@ -393,7 +393,7 @@ async function registraAccion() {
         }
     ]
 
-    var respuesta = await requestPOST(metodo, parametros, timeout, 1000)
+    var respuestaE = await requestPOST(metodo, parametros, timeout, 1000)
     var bool_hora_internet = false;
 
     try {
@@ -405,19 +405,19 @@ async function registraAccion() {
         } else {
             log.debug('OBTENIENDO HORA'.magenta)
             try {
-                hora = await getHora(respuesta);
+                hora = await getHora(respuestaE);
                 if(hora != null) bool_hora_internet= true;
                 log.debug(hora.magenta);
             } catch (e) {
                 log.debug('Error al Obtener la hora desde la web'.red)
                 log.debug(String(e).red)
+                // messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+                // spinnersAction("spinner-danger")
+                // setTimeout('location.reload()', 1600); // Relaod Page
             }
         
             var metodo = 'Registro'
             if (bool_hora_internet == true) {
-
-
-
                 var parametros = [{
                         param: 'idusuario',
                         value: reg_user
@@ -452,7 +452,9 @@ async function registraAccion() {
                     setTimeout('location.reload()', 1600); // Relaod Page
                 }
             } else {
+                try{
                 hora = await getHora(respuesta);
+                }catch{log.debug('Ultimo intento de obtener hora por internet AGOTADO');}
                 if (bool_hora_internet == false) {
                     if(hora != null){
                         const dt = dateTime.create();
@@ -522,12 +524,17 @@ function getHora(respuesta) {
     log.debug(urlHora.magenta);
 
     try{
+        log.debug('Buscando hora desde la web');
         $.get(urlHora, function( data ) {
             text = data;
+            log.debug('Proceso 1 OK');
             var horaObtenida = re.exec(text);
+            log.debug('Proceso 2 OK');
             var horaRT = horaObtenida[0];
+            log.debug('Proceso 3 OK');
             let [hr, min, seg] = horaRT.split(':');
             hrR = hr + ":" + min;
+            log.debug('Proceso 4 OK');
             log.debug('Hora obtenida desde la web ----> ' + horaRT + ' Hora Local: ' + hrReg);
         });
     }catch(e){
@@ -536,19 +543,8 @@ function getHora(respuesta) {
 
     return new Promise(respuesta => {
         setTimeout(() => {
-            if(hrR == null){
-                $.get(urlHora, function( data ) {
-                    text = data;
-                    var horaObtenida = re.exec(text)
-                    var horaRT = horaObtenida[0]
-                    // log.debug(horaRT.yellow);
-                    let [hr, min, seg] = horaRT.split(':')
-                    hrR = hr + ":" + min
-                    log.debug('Hora obtenida desde la web ----> ' + hora + ' Hora Local: ' + hrReg)
-                });
-            }
             respuesta(hrR)
-        }, 1000);
+        }, 2900);
     });
 }
 
