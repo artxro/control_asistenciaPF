@@ -595,7 +595,7 @@ function messageStatus(type, strong, normal) {
         $('#message-success').hide()
         $('#message-fail').hide()
         $('#message-info').hide()
-        $('#message-danger').html('<i class="fas fa-fingerprint"></i> <strong>  ' + strong + '</strong> ' + normal)
+        $('#message-fail').html('<i class="fas fa-fingerprint"></i> <strong>  ' + strong + '</strong> ' + normal)
         $('#message-danger').show()
         hrReg = '00:00'
     }
@@ -620,7 +620,7 @@ function statusSensor(stat){
             break;
         case 2:
             log.debug("Scan your finger");
-            messageStatus('info', 'Escaner Conectado ', ' ☝ puede registrarse ahora');
+            messageStatus('info', 'Escaner Conectado ', ' puede registrarse ahora ☝ ');
             setTimeout("spinnersAction('null')", 1000)
             break;
         case 3:
