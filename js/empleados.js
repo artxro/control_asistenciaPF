@@ -206,7 +206,7 @@ function hideElements(){
 }
 
 // Request POST Template
-function requestPOST(metodo, parametros, timeout, timeout_r=1000, debug=true) {
+function requestPOST(metodo, parametros, timeout, timeout_r=2000, debug=true) {
     const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
 					 \n\t<s:Body>\
 					 \n\t\t<' + metodo + ' xmlns="http://tempuri.org/">'
@@ -250,7 +250,7 @@ function requestPOST(metodo, parametros, timeout, timeout_r=1000, debug=true) {
 
     return new Promise(respuesta => {
         setTimeout(() => {
-            // if(debug == true) log.debug('Respuesta: ' + retun_)
+            if(debug == true) log.debug('\n\nRespuesta: ' + retun_)
             respuesta(retun_)
         }, timeout_r);
     });
@@ -503,7 +503,7 @@ async function getElementstoReg(parametros_) {
 		if(boolreturn[0] == true && boolreturn[1] == true && boolreturn[2] == true){
 			return new Promise(respuesta => {
 				setTimeout(() => {
-					log.debug('Respuesta: '.red + JSON.stringify(parametros_))
+					// log.debug('Respuesta: '.red + JSON.stringify(parametros_))
 					respuesta(parametros_)
 				}, 1000);
 			});
@@ -693,7 +693,7 @@ async function RegistrarUsuario(){
 
 	if(parametros != null){
 		try {
-			const respuesta = await requestPOST(metodo, parametros, timeout, 2000)
+			const respuesta = await requestPOST(metodo, parametros, 2000, 2500)
 	
 			if(respuesta == 'Error del proceso'){
 				messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
