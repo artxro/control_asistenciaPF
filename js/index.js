@@ -214,7 +214,7 @@ function asyncConfig() {
 
 
 // -------------------------- Metodos POST ------------------------------------
-function requestPOST(metodo, parametros, timeout, timeout_r = 1000) {
+function requestPOST(metodo, parametros, timeout, timeout_r = 1500) {
     const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
 					 \n\t<s:Body>\
 					 \n\t\t<' + metodo + ' xmlns="http://tempuri.org/">'
@@ -234,43 +234,81 @@ function requestPOST(metodo, parametros, timeout, timeout_r = 1000) {
     }
 
     const xml = xmlBody_I + xmlAdded + xmlBody_F
-    // log.debug(xml.yellow)
+    log.debug('xml'.cyan, xml.yellow)
     log.debug('metodo'.cyan, metodo)
     log.debug('url'.cyan, urlL)
 
-    request({
+
+    log.debug('Usando Ajax');
+    
+    $.ajax({
         url: urlL,
-        method: "POST",
+        type: 'POST',
         headers: {
             "content-type": "text/xml",
             "SOAPAction": ("http://tempuri.org/ISolicitud/" + metodo),
         },
-        body: xml,
-        timeout: 3000
-    }, function (error, response, body) {
-        // log.debug(error)
-        log.debug(body.yellow)
-        // log.debug(response)
-        if (response.statusCode == 200) {
+        timeout: timeout,
+        data: xml,
+        dataType: 'text',
+        success: function(data, status, xhr){
+            log.debug('--------------------------------------------------------------------');
+            log.debug(status);
+            log.debug(data);         
             const etiquetaResult_I = '<' + metodo + 'Result' + '>'
             const etiquetaResult_F = '</' + metodo + 'Result' + '>'
-            let [x, tmp] = body.split(etiquetaResult_I)
+            let [x, tmp] = data.split(etiquetaResult_I)
             let [resp, y] = tmp.split(etiquetaResult_F)
             retun_ = resp
+            log.debug(retun_);
+            log.debug('--------------------------------------------------------------------');
+        },
+        error: function(jqXhr, textSat, errorMes){
+            log.debug('--------------------------------------------------------------------');
+            log.debug(status);
+            log.debug(errorMes);
+        },
+        complete: function(data){
+            log.debug('Fin de la peticion')
+            log.devug('Fin AJAX')
         }
-    })
-
+    });
+    
+        
     return new Promise(respuesta => {
         setTimeout(() => {
             log.debug('Respuesta: ' + retun_)
             respuesta(retun_)
-        }, 1500);
+        }, timeout_r);
     });
+    // request({
+    //     url: urlL,
+    //     method: "POST",
+    //     headers: {
+    //         "content-type": "text/xml",
+    //         "SOAPAction": ("http://tempuri.org/ISolicitud/" + metodo),
+    //     },
+    //     body: xml,
+    //     timeout: 2000
+    // }, function (error, response, body) {
+    //     if (error) log.debug(String(error).red);
+    //     log.debug(body.yellow);
+    //     log.debug('STATUS CODE DEL SERVIDOR:'.yellow, String(response.statusCode).yellow);
+    //     if (response.statusCode == 200) {
+    //         const etiquetaResult_I = '<' + metodo + 'Result' + '>'
+    //         const etiquetaResult_F = '</' + metodo + 'Result' + '>'
+    //         let [x, tmp] = body.split(etiquetaResult_I)
+    //         let [resp, y] = tmp.split(etiquetaResult_F)
+    //         retun_ = resp
+    //     }else{
+    //         retun_ = null
+    //     }
+    // })
 }
 
 async function validarHuella(taco) {
     if (String(taco) != 'undefined') {
-        const timeout = 2000
+        const timeout = 900
         const metodo = 'ValidaHuellaWsq'
         const parametros = [{
                 param: 'empresa',
@@ -287,10 +325,11 @@ async function validarHuella(taco) {
         ]
         messageStatus('info', 'Procesando registro ', ' espere un momento...');
         spinnersAction("spinner-warning")
-        const respuesta = await requestPOST(metodo, parametros, timeout, 2000)
 
+        const respuesta = await requestPOST(metodo, parametros, timeout, 1500)
+        log.debug('Respuesta obtenida', respuesta);
         try {
-            if (respuesta == 'Error del proceso') {
+            if (respuesta == null) {
                 messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
                 spinnersAction("spinner-danger")
                 log.debug('\nError al procesar y validar la huella'.red)
@@ -325,15 +364,23 @@ async function validarHuella(taco) {
                     setTimeout('location.reload()', 1600); // Relaod Page
                 }
             }
+            
+            if (respuesta == 'Error en los datos ') {
+                log.debug("\n\nError al convertir Base64 a WSQ en el servidor\n\n".red);
+            }
         } catch (e) {
             log.error("Error al leer respuesta del servidor" + String(e).red)
+            messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+            spinnersAction("spinner-danger")
+            log.debug('\nError al procesar y validar la huella'.red)
+            setTimeout('location.reload()', 1600); // Relaod Page
         }
     }
 }
 
 async function registraAccion() {
     log.debug("****************** REGISTRO ******************".yellow);
-    const timeout = 2000
+    const timeout = 500
     var hora = "00:00";
     var metodo = 'ConsultaEstadosHTML'
     var parametros = [{
@@ -384,7 +431,7 @@ async function registraAccion() {
                         value: hora
                     }
                 ]
-                var respuesta = await requestPOST(metodo, parametros, 800, 1000)
+                var respuesta = await requestPOST(metodo, parametros, timeout, 1000)
                 try {
                     if (respuesta == 'true') {
                         messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
@@ -501,7 +548,7 @@ function getHora(respuesta) {
                 });
             }
             respuesta(hrR)
-        }, 2000);
+        }, 1000);
     });
 }
 
