@@ -609,11 +609,13 @@ function statusSensor(stat){
             break;
         case 2:
             log.debug("Scan your finger");
+            messageStatus('spinner-info', 'Escaner Conectado ', ' ☝ puede registrarse ahora');
+            setTimeout("spinnersAction('null')", 1000)
             break;
         case 3:
             log.debug("Device disconnected");
-            messageStatus('danger', 'Escaner no detectado ', ' Valide que su escaner de huellas está conectado 🚨');
-            spinnersAction("spinner-info")
+            messageStatus('spinner-danger', 'Escaner no detectado ', ' Valide que su escaner de huellas está conectado 🚨');
+            spinnersAction("spinner-danger")
         
             if (firstdisconnected == false){
                 log.debug("Device disconnected - 1");
