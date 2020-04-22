@@ -47,7 +47,7 @@
 
 <body>
 
-	<br><button id="btnreload" type="button" class="btn btn-primary btn-lg active" onclick="reload();" style="position: absolute; right: 80;"><i class="fas fa-sync-alt"></i></button>
+	<br><button id="btnreload" type="button" class="btn btn-primary btn-lg active" onclick="reload();" style="position: absolute; right: 80;"><i class="fas fa-sync-alt"> Reiniciar Página</i></button>
 		
 	<div class="container">
 
@@ -134,7 +134,7 @@
 				<span class="sr-only">Loading...</span>
 			</div>
 
-			<div id="spinner-dangerd" class="spinner-grow text-danger" role="status">
+			<div id="spinner-danger" class="spinner-grow text-danger" role="status">
 				<span class="sr-only">Loading...</span>
 			</div>
 		</div>
@@ -220,17 +220,24 @@
 
 	function reload(extra = ''){
 		log.debug("Reiniciando app...".yellow);
+
+		$('#spinner-info').hide()
+		$('#spinner-success').hide()
+		$('#spinner-danger').hide()
 		$('#spinner-warning').show();
-		$('#spinner-info').hide();
-		$('#message-info').hide();
+
+		$('#message-info').hide()
+		$('#message-fail').hide()
+		$('#message-success').hide()
 		$('#message-warning').show();
+
 		$('#message-warning').html("<strong>Reiniciando...</strong>\u231B " + extra)
 		$("#btnreload").html('<i class="fas fa-sync-alt fa-2x fa-spin"></i>');
 
 		setTimeout(() => {
 			$('#spinner-warning').show();
 			location.reload();
-		}, 1500);
+		}, 1000);
 	}
 </script>
 <script src="js/scanner/scripts/es6-shim.js"></script>

@@ -38,6 +38,7 @@ let hrReg = dt.format('H:M');
 
 var horaREG = null;
 
+var deviceDisconected = true;
 
 var urlL='';
 const readline = require('readline');
@@ -70,7 +71,7 @@ try {
 }
 // -------------------------- ON READY ------------------------------------
 $(document).ready(async function () {
-   
+    deviceconectesRegistro = false;
     // ------ Desarrollo -------   
     setLOG()
     hideElements();
@@ -139,7 +140,8 @@ function fpdStart() {
 function onStop() {
     fpd.stopCapture();
     status_captura = false;
-    log.debug('Proceso de captura --> DETENIDO'.red)
+    log.debug('Proceso de captura --> DETENIDO'.red);
+    deviceconectesRegistro = false;
 }
 
 function setLOG() {
@@ -504,20 +506,27 @@ function getHora(respuesta) {
 }
 
 // ------------------------------Animated stuff---------------------------------------
+var deviceconectesRegistro;
 function buttonClick(tipo) {
-    log.debug('\n--------------------------------------------------------------------------------------------------------------------');
+    if (deviceDisconected == false){
+        deviceconectesRegistro = true;
+        log.debug('\n--------------------------------------------------------------------------------------------------------------------');
 
-    const dt = dateTime.create();
-    hrReg = dt.format('H:M');
+        const dt = dateTime.create();
+        hrReg = dt.format('H:M');
 
-    log.debug('Boton Registro: ' + tipo);
-    registro = tipo;
-    log.debug('Tipo de registro: ' + String(registro).yellow + ' HORA LOCAL ->' + hrReg.blue);
-    
-    fpdStart() // Detenccion de huellas activado
+        log.debug('Boton Registro: ' + tipo);
+        registro = tipo;
+        log.debug('Tipo de registro: ' + String(registro).yellow + ' HORA LOCAL ->' + hrReg.blue);
+        
+        fpdStart() // Detenccion de huellas activado
 
-    messageStatus('info', 'Obteniendo Huella ', ' Coloque su dedo sobre el escaner 👆');
-    spinnersAction("spinner-info")
+        messageStatus('info', 'Obteniendo Huella ', ' Coloque su dedo sobre el escaner 👆');
+        spinnersAction("spinner-info")
+    }else{
+        messageStatus('warning', '- Escaner no detectado -', ' Intente conectandolo y dando clic en "Reiniciar la pagina"');
+        log.debug('Device not conected, no se procede al registro');
+    }
     // //ControlAccesoHuella(tipo)
 
     // $('#' + tipo).prop("disabled", true);
@@ -538,6 +547,7 @@ function buttonClick(tipo) {
 }
 
 function hideElements() {
+    log.debug('Ocultando Elementos');
     $('#message-info').hide()
     $('#message-fail').hide()
     $('#message-success').hide()
@@ -568,6 +578,7 @@ function spinnersAction(id) {
 // ----------------------------- ALERTS --------------------------------------
 function messageStatus(type, strong, normal) {
     if (String(type) == 'success') {
+        $('#message-warning').hide()
         $('#message-fail').hide()
         $('#message-info').hide()
         $('#message-danger').hide()
@@ -576,6 +587,7 @@ function messageStatus(type, strong, normal) {
         hrReg = '00:00'
     }
     if (String(type) == 'fail') {
+        $('#message-warning').hide()
         $('#message-success').hide()
         $('#message-info').hide()
         $('#message-danger').hide()
@@ -584,6 +596,7 @@ function messageStatus(type, strong, normal) {
         hrReg = '00:00'
     }
     if (String(type) == 'info') {
+        $('#message-warning').hide()
         $('#message-success').hide()
         $('#message-fail').hide()
         $('#message-danger').hide()
@@ -592,11 +605,28 @@ function messageStatus(type, strong, normal) {
         hrReg = '00:00'
     }
     if (String(type) == 'danger') {
+        $('#message-warning').hide()
         $('#message-success').hide()
         $('#message-fail').hide()
         $('#message-info').hide()
         $('#message-fail').html('<i class="fas fa-fingerprint"></i> <strong>  ' + strong + '</strong> ' + normal)
-        $('#message-danger').show()
+        $('#message-fail').show()
+        hrReg = '00:00'
+    }
+    if (String(type) == 'warning') {
+        $('#message-warning').hide()
+        $('#message-success').hide()
+        $('#message-fail').hide()
+        $('#message-info').hide()
+        $('#message-warning').html('<i class="fas fa-fingerprint"></i> <strong>  ' + strong + '</strong> ' + normal)
+        $('#message-warning').show()
+        hrReg = '00:00'
+    }
+    if (String(type) == 'null') {
+        $('#message-success').hide()
+        $('#message-fail').hide()
+        $('#message-info').hide()
+        $('#message-warning').hide()
         hrReg = '00:00'
     }
 }
@@ -604,7 +634,6 @@ function messageStatus(type, strong, normal) {
 
 // status del sensor
 sensorstatcount = 0
-firstdisconnected = false
 function statusSensor(stat){
     log.debug('Estatus del Sensor:'.magenta, stat);
 
@@ -619,21 +648,20 @@ function statusSensor(stat){
             log.debug('FingerPrint Device Iniciado...');
             break;
         case 2:
-            log.debug("Scan your finger");
-            messageStatus('info', 'Escaner Conectado ', ' puede registrarse ahora ☝ ');
-            setTimeout("spinnersAction('null')", 1000)
+            deviceDisconected = false;
+            if(deviceconectesRegistro == false){
+                log.debug("Scan your finger");
+                messageStatus('info', 'Escaner Conectado ', ' puede registrarse ahora ☝ ');
+                setTimeout("spinnersAction('null')", 1000)
+            }else{
+                log.debug("Scan your finger");
+            }
             break;
         case 3:
             log.debug("Device disconnected");
-            messageStatus('danger', 'Escaner no detectado ', ' Valide que su escaner de huellas está conectado 🚨');
+            messageStatus('danger', 'Escaner no detectado ', ' verifique que el escaner de huellas esté conectado 🚨  ');
             spinnersAction("spinner-danger")
-        
-            if (firstdisconnected == false){
-                log.debug("Device disconnected - 1");
-                firstdisconnected = true;
-            }else{
-                // ipc.send('statusSensor', "El Sensor se ha desconectado");
-            }
+            deviceDisconected = true;
             break;
         case 4:
             log.debug("Communinication Failed");
