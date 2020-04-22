@@ -261,7 +261,7 @@ function requestPOST(metodo, parametros, timeout, timeout_r=1000, debug=true) {
 async function getElementstoReg(parametros_) {
 	try{
 		log.debug('Obteniedo elementos para el registro'.blue);
-		let boolreturn = [false,false, false]  // booleano [datos, huella, username]
+		let boolreturn = [false,false, true]  // booleano [datos, huella, username]
 		const dic_params = {1 : "idempresa", 2 : "idSucursal", 3 : "mac", 4 : "idDedo", 5 : "huella", 6 : "aPAT", 
 							7 : "aMAT", 8 : "nombre", 9 : "jsonString", 10 : "usuario", 11 : "password", 12 : "rol"} 
 		
@@ -300,7 +300,7 @@ async function getElementstoReg(parametros_) {
 		var camposEmpty = '';
 		if(usertype == false){
 			log.debug('Usuario Normal');
-			if(bool_valnombre == false && bool_valapellidoPat == false  && bool_valapellidoMat == true){
+			if(bool_valnombre == false && bool_valapellidoPat == false  && bool_valapellidoMat == false){
 				log.debug('Todos los campos incompletos')
 				$('#message-fail').html('<i class="fas fa-ban"></i> <strong> * </strong> Debe llenar todos los campos del formulario');
 				$('#message-fail').show();
@@ -309,13 +309,14 @@ async function getElementstoReg(parametros_) {
 				$("#inputAMat").css("border-color", "red");
 				parametros_ = null;
 			}else{
-				log.debug('Campos incompletos detenctando');
+				log.debug('Campos incompletos detectando');
 				if (bool_valnombre == false) { 
 					camposEmpty += ', Nombre';
 					$("#inputNombre").css("border-color", "red");
 				}else{
 					$("#inputNombre").css("border-color", "");
 					parametros_[7].value = reg_nombre;
+					log.debug('---> Nombre OK:', reg_nombre);
 				}
 	
 				if(bool_valapellidoPat == false){
@@ -324,6 +325,7 @@ async function getElementstoReg(parametros_) {
 				}else{
 					$("#inputAPat").css("border-color", "");
 					parametros_[5].value = reg_apellidoP;
+					log.debug('---> Apellido Paterno OK:', reg_apellidoP);
 				}
 	
 				if(bool_valapellidoMat == false){
@@ -332,6 +334,7 @@ async function getElementstoReg(parametros_) {
 				}else{
 					$("#inputAMat").css("border-color", "");
 					parametros_[6].value = reg_apellidoM;
+					log.debug('---> Apellido Materno OK:', reg_apellidoM);
 				}
 	
 				if(camposEmpty != ''){
@@ -492,7 +495,10 @@ async function getElementstoReg(parametros_) {
 			$('#message-fail-huella').hide();
 			parametros_[4].value = JSON.stringify(huellas_wsq);
 			boolreturn[1] = true;
+			log.debug('---> Huella OK:', reg_nombre);
 		}
+
+		log.debug('::: Parametros Boleanos', boolreturn[0], boolreturn[1], boolreturn[2]);
 		
 		if(boolreturn[0] == true && boolreturn[1] == true && boolreturn[2] == true){
 			return new Promise(respuesta => {
