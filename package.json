@@ -11,7 +11,7 @@
     "url": "https://github.com/artxro/control_asistenciaPF.git"
   },
   "scripts": {
-    "start": "electron . --disable-gpu",
+    "start": "electron .",
     "build": "electron-builder build --win --x64 --ia32 --publish never",
     "build32": "electron-builder build --win --ia32 --publish never",
     "deploy": "electron-builder build --win --publish always",

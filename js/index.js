@@ -308,7 +308,7 @@ function requestPOST(metodo, parametros, timeout, timeout_r = 2000) {
 
 async function validarHuella(taco) {
     if (String(taco) != 'undefined') {
-        const timeout = 900
+        const timeout = 3000
         const metodo = 'ValidaHuellaWsq'
         const parametros = [{
                 param: 'empresa',
@@ -326,7 +326,7 @@ async function validarHuella(taco) {
         messageStatus('info', 'Procesando registro ', ' espere un momento...');
         spinnersAction("spinner-warning")
 
-        const respuesta = await requestPOST(metodo, parametros, timeout, 1500)
+        const respuesta = await requestPOST(metodo, parametros, timeout, 2500)
         log.debug('Respuesta obtenida', respuesta);
         try {
             if (respuesta == null) {
@@ -403,17 +403,21 @@ async function registraAccion() {
             log.debug('\nError al procesar y validar la huella'.red)
             setTimeout('location.reload()', 1600); // Relaod Page
         } else {
-            log.debug('OBTENIENDO HORA'.magenta)
-            try {
-                hora = await getHora(respuestaE);
-                if(hora != null) bool_hora_internet= true;
-                log.debug(hora.magenta);
-            } catch (e) {
-                log.debug('Error al Obtener la hora desde la web'.red)
-                log.debug(String(e).red)
-                // messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
-                // spinnersAction("spinner-danger")
-                // setTimeout('location.reload()', 1600); // Relaod Page
+            var countP = 0;
+            for(i=0; i<=2; i++){ 
+                log.debug('Numero de intentos:', i)               
+                log.debug('OBTENIENDO HORA'.magenta)
+                try {
+                    hora = await getHora(respuestaE);
+                    if(hora != null) bool_hora_internet= true;
+                    log.debug(hora);
+                } catch (e) {
+                    log.debug('Error al Obtener la hora desde la web'.red)
+                    log.debug(String(e).red)
+                    // messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+                    // spinnersAction("spinner-danger")
+                    // setTimeout('location.reload()', 1600); // Relaod Page
+                }
             }
         
             var metodo = 'Registro'
@@ -452,11 +456,15 @@ async function registraAccion() {
                     setTimeout('location.reload()', 1600); // Relaod Page
                 }
             } else {
-                try{
-                hora = await getHora(respuesta);
-                }catch{log.debug('Ultimo intento de obtener hora por internet AGOTADO');}
+                // try{
+                //     log.
+                // hora = await getHora(respuestaE);
+                // }catch{
+                //     log.debug('Ultimo intento de obtener hora por internet AGOTADO');
+                //      bool_hora_internet == false;
+                // }
+                log.debug('Tomando hora de la maquina')
                 if (bool_hora_internet == false) {
-                    if(hora != null){
                         const dt = dateTime.create();
                         hora = dt.format('H:M');
                         var parametros = [{
@@ -495,7 +503,6 @@ async function registraAccion() {
                         } catch (e) {
                             log.error("Error al leer respuesta del servidor" + String(e).red)
                         }
-                    }
                 } else {
                     messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
                     spinnersAction("spinner-danger")
@@ -525,18 +532,50 @@ function getHora(respuesta) {
 
     try{
         log.debug('Buscando hora desde la web');
-        $.get(urlHora, function( data ) {
-            text = data;
-            log.debug('Proceso 1 OK');
-            var horaObtenida = re.exec(text);
-            log.debug('Proceso 2 OK');
-            var horaRT = horaObtenida[0];
-            log.debug('Proceso 3 OK');
-            let [hr, min, seg] = horaRT.split(':');
-            hrR = hr + ":" + min;
-            log.debug('Proceso 4 OK');
-            log.debug('Hora obtenida desde la web ----> ' + horaRT + ' Hora Local: ' + hrReg);
+        $.ajax({
+            url: urlHora,
+            type: 'GET',
+            timeout: 1500,
+            dataType: 'text',
+            success: function(data, status, xhr){
+                log.debug('--------------------------------------------------------------------');
+                log.debug(status);
+                log.debug(data);         
+                text = data;
+                log.debug('Proceso 1 OK');
+                var horaObtenida = re.exec(text);
+                log.debug('Proceso 2 OK');
+                var horaRT = horaObtenida[0];
+                log.debug('Proceso 3 OK');
+                let [hr, min, seg] = horaRT.split(':');
+                hrR = hr + ":" + min;
+                log.debug('Proceso 4 OK');
+                log.debug('Hora obtenida desde la web ----> ' + horaRT + ' Hora Local: ' + hrReg);
+                log.debug('--------------------------------------------------------------------');
+            },
+            error: function(jqXhr, textSat, errorMes){
+                log.debug('--------------------------------------------------------------------');
+                log.debug(status);
+                log.debug(errorMes);
+            },
+            complete: function(data){
+                log.debug('Fin de la peticion')
+                log.devug('Fin AJAX')
+            }
         });
+
+        // $.get(urlHora, function( data ) {
+        //     text = data;
+        //     log.debug('Proceso 1 OK');
+        //     var horaObtenida = re.exec(text);
+        //     log.debug('Proceso 2 OK');
+        //     var horaRT = horaObtenida[0];
+        //     log.debug('Proceso 3 OK');
+        //     let [hr, min, seg] = horaRT.split(':');
+        //     hrR = hr + ":" + min;
+        //     log.debug('Proceso 4 OK');
+        //     log.debug('Hora obtenida desde la web ----> ' + horaRT + ' Hora Local: ' + hrReg);
+        // });
     }catch(e){
         log.error(String(e).red)
     }
@@ -544,7 +583,7 @@ function getHora(respuesta) {
     return new Promise(respuesta => {
         setTimeout(() => {
             respuesta(hrR)
-        }, 2200);
+        }, 2500);
     });
 }
 

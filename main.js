@@ -24,7 +24,7 @@ const readline = require('readline');
 const dateTime = require('node-datetime');
 require('electron-reload')(__dirname); // Desarrollo stuff Actualizacion de codigo automatica en cambios 
 
-app.commandLine.appendSwitch('disable-gpu');
+// app.commandLine.appendSwitch('disable-gpu');
 
 //---------- VARIABLES MAIN ----------------//
 const ConfigPATH = os.homedir + '/.config/Control-Asistencia';
