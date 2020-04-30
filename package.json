@@ -47,7 +47,7 @@
     "filesize": "^6.1.0",
     "fs": "0.0.1-security",
     "is-base64": "^0.1.0",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "macaddress": "^0.2.9",
     "min-jquery": "^1.7.0",
     "node-datetime": "^2.1.2",
