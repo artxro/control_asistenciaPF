@@ -910,6 +910,15 @@ function errorSensor(details) {
 	})
 }
 //----------------------------------- AUTOUPDATER SECCION -----------------------------------
+autoUpdater.setFeedURL({ provider: 'github'
+, owner: 'artxro'
+, repo: 'control_asistenciaPF'
+, token: '09276baef6c34bbbc9a145030f6fc69f6fc7cd36'
+, private: true });
+
+autoUpdater.allowDowngrade = false
+
+
 function buscarActualizacion() {
 	log.debug('Version:', app.getVersion());
 	autoUpdater.checkForUpdatesAndNotify();
