@@ -840,7 +840,6 @@ async function validateConfig(){
 //----------------------------------------- App funtions escencials ------------------------------------//
 app.on('ready', () => {
 	validateConfig();
-
 })
 app.on('window-all-closed', () => {
 	try {
@@ -944,5 +943,3 @@ ipcMain.on('restart_app', () => {
 });
 
 
-
-// export GH_TOKEN=c1c9b3758168cb6de269a8f6c4a564f5eb86d734

@@ -11,6 +11,36 @@ const ipc = require('electron').ipcRenderer;
 
 const rde = base64.decode('MGJsaXZpYXQzIw==');
 const cry = new Cry(rde);
+var ifaces = os.networkInterfaces();
+var iplocal;
+var mac;
+
+Object.keys(ifaces).forEach(function (ifname) {
+	var alias = 0;
+
+    ifaces[ifname].forEach(function (iface) {
+        if ('IPv4' !== iface.family || iface.internal !== false) {
+        // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+        return;
+        }
+
+        log.debug('-------------------------------------------------------------'.red)
+        if (alias >= 1) {
+        // this single interface has multiple ipv4 addresses
+        iplocal = iface.address;
+        mac = iface.mac;
+        log.debug(ifname + ':' + alias, iface.address);
+        log.debug(ifname + ':' + alias, iface.mac);
+        } else {
+        // this interface has only one ipv4 adress
+        log.debug(ifname, iface.address);
+        log.debug(ifname, iface.mac);
+        }
+        ++alias;
+    });
+});
+
+
 
 let empresaID;
 let sucursalID;
@@ -108,6 +138,34 @@ function requestPOST(metodo, parametros, timeout) {
 }
 
 async function login() {
+    Object.keys(ifaces).forEach(function (ifname) {
+        var alias = 0;
+    
+        ifaces[ifname].forEach(function (iface) {
+            if ('IPv4' !== iface.family || iface.internal !== false) {
+            // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+            return;
+            }
+    
+            log.debug('-------------------------------------------------------------'.red)
+            if (alias >= 1) {
+            // this single interface has multiple ipv4 addresses
+            iplocal = iface.address;
+            mac = iface.mac;
+            log.debug(ifname + ':' + alias, iface.address);
+            log.debug(ifname + ':' + alias, iface.mac);
+            } else {
+            // this interface has only one ipv4 adress
+            iplocal = iface.address;
+            mac = iface.mac;
+            log.debug(ifname, iface.address);
+            log.debug(ifname, iface.mac);
+            }
+            ++alias;
+        });
+    });
+
+    
     const user = $('#inputUser').val();
     const pwd = hash($('#inputPassword').val());
 
@@ -127,6 +185,10 @@ async function login() {
                 {
                     param: 'password',
                     value: pwd
+                },
+                {
+                    param: 'IP',
+                    value: iplocal
                 }
             ]
             const respuesta = await requestPOST(metodo, parametros, timeout)
