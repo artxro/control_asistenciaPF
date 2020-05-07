@@ -326,7 +326,8 @@ async function validarHuella(taco) {
         messageStatus('info', 'Procesando registro ', ' espere un momento...');
         spinnersAction("spinner-warning")
 
-        const respuesta = await requestPOST(metodo, parametros, timeout, 2500)
+        const respuesta = await requestPOST(metodo, parametros, timeout, 2500);
+        
         log.debug('Respuesta obtenida', respuesta);
         try {
             if (respuesta == null) {
@@ -379,23 +380,27 @@ async function validarHuella(taco) {
 }
 
 async function registraAccion() {
+
     log.debug("****************** REGISTRO ******************".yellow);
-    const timeout = 500
-    var hora = "00:00";
-    var metodo = 'ConsultaEstadosHTML'
+    
+    const dt = dateTime.create();
+    hora = dt.format('H:M');
+    
+    var metodo = 'Registro'
     var parametros = [{
-            param: 'tipoBusq',
-            value: '1'
+            param: 'idusuario',
+            value: reg_user
         },
         {
-            param: 'idsucursal',
-            value: sucursalID
+            param: 'tipoReg',
+            value: registro
+        },
+        {
+            param: 'hrReg',
+            value: hora
         }
     ]
-
-    var respuestaE = await requestPOST(metodo, parametros, timeout, 1000)
-    var bool_hora_internet = false;
-
+    var respuesta = await requestPOST(metodo, parametros, 1000, 500)
     try {
         if (respuesta == 'Error del proceso') {
             messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
@@ -403,119 +408,167 @@ async function registraAccion() {
             log.debug('\nError al procesar y validar la huella'.red)
             setTimeout('location.reload()', 1600); // Relaod Page
         } else {
-            var countP = 0;
-            for(i=0; i<=2; i++){ 
-                log.debug('Numero de intentos:', i)               
-                log.debug('OBTENIENDO HORA'.magenta)
-                try {
-                    hora = await getHora(respuestaE);
-                    if(hora != null) bool_hora_internet= true;
-                    log.debug(hora);
-                } catch (e) {
-                    log.debug('Error al Obtener la hora desde la web'.red)
-                    log.debug(String(e).red)
-                    // messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
-                    // spinnersAction("spinner-danger")
-                    // setTimeout('location.reload()', 1600); // Relaod Page
-                }
-            }
-        
-            var metodo = 'Registro'
-            if (bool_hora_internet == true) {
-                var parametros = [{
-                        param: 'idusuario',
-                        value: reg_user
-                    },
-                    {
-                        param: 'tipoReg',
-                        value: registro
-                    },
-                    {
-                        param: 'hrReg',
-                        value: hora
-                    }
-                ]
-                var respuesta = await requestPOST(metodo, parametros, timeout, 500)
-                try {
-                    if (respuesta == 'true') {
-                        messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
-                        spinnersAction("spinner-success")
-                        log.debug('Registro exitoso 😄, Hora: ' + hora.green)
-                        setTimeout('location.reload()', 2500); // Relaod Page
-                    } else {
-                        messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
-                        spinnersAction("spinner-danger")
-                        log.debug('Error al procesar y validar la huella'.red)
-                        setTimeout('location.reload()', 2500); // Relaod Page
-                    }
-
-                } catch (e) {
-                    log.error("Error al leer respuesta del servidor" + String(e).red)
-                    messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
-                    spinnersAction("spinner-danger")
-                    setTimeout('location.reload()', 1600); // Relaod Page
-                }
+            if (respuesta == 'true') {
+                messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
+                spinnersAction("spinner-success")
+                log.debug('\nRegistro exitoso 😄, Hora: ' + hora.green)
+                setTimeout('location.reload()', 1600); // Relaod Page
             } else {
-                // try{
-                //     log.
-                // hora = await getHora(respuestaE);
-                // }catch{
-                //     log.debug('Ultimo intento de obtener hora por internet AGOTADO');
-                //      bool_hora_internet == false;
-                // }
-                log.debug('Tomando hora de la maquina')
-                if (bool_hora_internet == false) {
-                        const dt = dateTime.create();
-                        hora = dt.format('H:M');
-                        var parametros = [{
-                                param: 'idusuario',
-                                value: reg_user
-                            },
-                            {
-                                param: 'tipoReg',
-                                value: registro
-                            },
-                            {
-                                param: 'hrReg',
-                                value: hora
-                            }
-                        ]
-                        var respuesta = await requestPOST(metodo, parametros, timeout, 500)
-                        try {
-                            if (respuesta == 'Error del proceso') {
-                                messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
-                                spinnersAction("spinner-danger")
-                                log.debug('\nError al procesar y validar la huella'.red)
-                                setTimeout('location.reload()', 1600); // Relaod Page
-                            } else {
-                                if (respuesta == 'true') {
-                                    messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
-                                    spinnersAction("spinner-success")
-                                    log.debug('\nRegistro exitoso 😄, Hora: ' + hora.green)
-                                    setTimeout('location.reload()', 1600); // Relaod Page
-                                } else {
-                                    messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
-                                    spinnersAction("spinner-danger")
-                                    log.debug('\nError al procesar y validar la huella'.red)
-                                    setTimeout('location.reload()', 1600); // Relaod Page
-                                }
-                            }
-                        } catch (e) {
-                            log.error("Error al leer respuesta del servidor" + String(e).red)
-                        }
-                } else {
-                    messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
-                    spinnersAction("spinner-danger")
-                    log.debug('\nError al procesar y validar la huella'.red)
-                    setTimeout('location.reload()', 1600); // Relaod Page
-                    log.error('Error al registrar'.red);
-                }
+                messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+                spinnersAction("spinner-danger")
+                log.debug('\nError al procesar y validar la huella'.red)
+                setTimeout('location.reload()', 1600); // Relaod Page
             }
-
         }
     } catch (e) {
         log.error("Error al leer respuesta del servidor" + String(e).red)
+        messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+        spinnersAction("spinner-danger")
+        log.debug('\nError al procesar y validar la huella'.red)
+        setTimeout('location.reload()', 1600); // Relaod Page
     }
+
+
+
+
+    // log.debug("****************** REGISTRO ******************".yellow);
+
+    // const timeout = 500
+    // var hora = "00:00";
+    // var metodo = 'ConsultaEstadosHTML'
+    // var parametros = [{
+    //         param: 'tipoBusq',
+    //         value: '1'
+    //     },
+    //     {
+    //         param: 'idsucursal',
+    //         value: sucursalID
+    //     }
+    // ]
+
+    // var respuestaE = await requestPOST(metodo, parametros, timeout, 1000)
+    // var bool_hora_internet = false;
+
+    // try {
+    //     if (respuesta == 'Error del proceso') {
+    //         messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+    //         spinnersAction("spinner-danger")
+    //         log.debug('\nError al procesar y validar la huella'.red)
+    //         setTimeout('location.reload()', 1600); // Relaod Page
+    //     } else {
+    //         var countP = 0;
+    //         for(i=0; i<=2; i++){ 
+    //             log.debug('Numero de intentos:', i)               
+    //             log.debug('OBTENIENDO HORA'.magenta)
+    //             try {
+    //                 hora = await getHora(respuestaE);
+    //                 if(hora != null) bool_hora_internet= true;
+    //                 log.debug(hora);
+    //             } catch (e) {
+    //                 log.debug('Error al Obtener la hora desde la web'.red)
+    //                 log.debug(String(e).red)
+    //                 // messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+    //                 // spinnersAction("spinner-danger")
+    //                 // setTimeout('location.reload()', 1600); // Relaod Page
+    //             }
+    //         }
+        
+    //         var metodo = 'Registro'
+    //         if (bool_hora_internet == true) {
+    //             var parametros = [{
+    //                     param: 'idusuario',
+    //                     value: reg_user
+    //                 },
+    //                 {
+    //                     param: 'tipoReg',
+    //                     value: registro
+    //                 },
+    //                 {
+    //                     param: 'hrReg',
+    //                     value: hora
+    //                 }
+    //             ]
+    //             var respuesta = await requestPOST(metodo, parametros, timeout, 500)
+    //             try {
+    //                 if (respuesta == 'true') {
+    //                     messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
+    //                     spinnersAction("spinner-success")
+    //                     log.debug('Registro exitoso 😄, Hora: ' + hora.green)
+    //                     setTimeout('location.reload()', 2500); // Relaod Page
+    //                 } else {
+    //                     messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+    //                     spinnersAction("spinner-danger")
+    //                     log.debug('Error al procesar y validar la huella'.red)
+    //                     setTimeout('location.reload()', 2500); // Relaod Page
+    //                 }
+
+    //             } catch (e) {
+    //                 log.error("Error al leer respuesta del servidor" + String(e).red)
+    //                 messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+    //                 spinnersAction("spinner-danger")
+    //                 setTimeout('location.reload()', 1600); // Relaod Page
+    //             }
+    //         } else {
+    //             // try{
+    //             //     log.
+    //             // hora = await getHora(respuestaE);
+    //             // }catch{
+    //             //     log.debug('Ultimo intento de obtener hora por internet AGOTADO');
+    //             //      bool_hora_internet == false;
+    //             // }
+    //             log.debug('Tomando hora de la maquina')
+    //             if (bool_hora_internet == false) {
+    //                     const dt = dateTime.create();
+    //                     hora = dt.format('H:M');
+    //                     var parametros = [{
+    //                             param: 'idusuario',
+    //                             value: reg_user
+    //                         },
+    //                         {
+    //                             param: 'tipoReg',
+    //                             value: registro
+    //                         },
+    //                         {
+    //                             param: 'hrReg',
+    //                             value: hora
+    //                         }
+    //                     ]
+    //                     var respuesta = await requestPOST(metodo, parametros, timeout, 500)
+    //                     try {
+    //                         if (respuesta == 'Error del proceso') {
+    //                             messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+    //                             spinnersAction("spinner-danger")
+    //                             log.debug('\nError al procesar y validar la huella'.red)
+    //                             setTimeout('location.reload()', 1600); // Relaod Page
+    //                         } else {
+    //                             if (respuesta == 'true') {
+    //                                 messageStatus('success', 'Registro exitoso 😄', 'Hora: ' + hora);
+    //                                 spinnersAction("spinner-success")
+    //                                 log.debug('\nRegistro exitoso 😄, Hora: ' + hora.green)
+    //                                 setTimeout('location.reload()', 1600); // Relaod Page
+    //                             } else {
+    //                                 messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+    //                                 spinnersAction("spinner-danger")
+    //                                 log.debug('\nError al procesar y validar la huella'.red)
+    //                                 setTimeout('location.reload()', 1600); // Relaod Page
+    //                             }
+    //                         }
+    //                     } catch (e) {
+    //                         log.error("Error al leer respuesta del servidor" + String(e).red)
+    //                     }
+    //             } else {
+    //                 messageStatus('fail', '¡No se registró!', 'Intente de nuevo.');
+    //                 spinnersAction("spinner-danger")
+    //                 log.debug('\nError al procesar y validar la huella'.red)
+    //                 setTimeout('location.reload()', 1600); // Relaod Page
+    //                 log.error('Error al registrar'.red);
+    //             }
+    //         }
+
+    //     }
+    // } catch (e) {
+    //     log.error("Error al leer respuesta del servidor" + String(e).red)
+    // }
 }
 
 

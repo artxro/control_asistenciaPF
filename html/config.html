@@ -55,7 +55,7 @@
 			</div>
 
 		</form>
-		<p class="mt-5 mb-3 text-muted text-center">&copy; Grupo GarSa - Préstamo Feliz</p>
+		<p class="mt-5 mb-3 text-muted text-center">Préstamo Feliz</p>
 
 
 	</div>
@@ -87,6 +87,7 @@
 
 		log.debug('Redirigiendo log'.cyan + ' ---> '.magenta + logFile.yellow)
 		log.transports.file.file = logFile
+
 
         const readline = require('readline');
         
@@ -126,6 +127,13 @@
 		}
 
 		function inicial() {
+
+			macaddress.all(function (err, all) {
+				macs = JSON.stringify(all, null, 2)
+				log.debug(macs);
+			});
+
+
 			var id_empresa = $("option:selected").val();
 			var id_sucursal = $("#idSucursal").val();
 

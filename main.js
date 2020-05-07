@@ -5,7 +5,6 @@ const {	ipcRenderer } = require('electron');
 const { ipcMain } = require('electron');
 const {	dialog } = require('electron');
 const {	autoUpdater } = require('electron-updater');
-const $ = require('jquery');
 const log = require('electron-log');
 const colors = require('colors');
 const fs = require('fs');
@@ -16,23 +15,30 @@ const url = require('url');
 const macaddress = require('macaddress');
 const os = require('os');
 const base64 = require('base-64');
-const checkInt = require('dns');
+// const checkInt = require('dns');
+const ping = require('ping');
 const request = require('request');
 const Cyr = require('cryptr');
 const readline = require('readline');
-
 const dateTime = require('node-datetime');
+const $ = require('jquery');
+
 require('electron-reload')(__dirname); // Desarrollo stuff Actualizacion de codigo automatica en cambios 
 
+// Fix gpu Error ...
 // app.commandLine.appendSwitch('disable-gpu');
 
 //---------- VARIABLES MAIN ----------------//
+const ifaces = os.networkInterfaces();
+
 const ConfigPATH = os.homedir + '/.config/Control-Asistencia';
 const ConfigFile = ConfigPATH + '/config';
 const UserFile = ConfigPATH + '/user';
 const ConfigFilejs = ConfigPATH + '/conect.conf';
 const logFile = ConfigPATH + '/app.log';
 
+var mac = null;
+var iplocal = null;
 var empresaID;
 var sucursalID;
 var loginBool = [true, false]; // Estatus de ventana login para crear o no otra nueva  [Ventana nueva, Focus]
@@ -43,8 +49,10 @@ const taco = base64.decode('MGJsaXZpYXQzIw==');
 const cry = new Cyr(taco);
 
 //------------IP SERVICIO------------------//
-var urlP = "";
-var urlL = "";
+const urlP = 'wshuella.prestamofeliz.com.mx';
+const urlL = 'http://wshuella.prestamofeliz.com.mx:9045/WSH.svc';
+// const urlP = 'prestamofeliz.com.mx';
+// const urlL = 'http://workpc:45455/WSH.svc';
 
 
 //---------------------------------------------------- PROMTP ----------------------------------------------//
@@ -53,6 +61,7 @@ const MessagePrompt_F = 'd88888b d88888b db      d888888b d88888D \n88      88  
 //---------------------------------------------------- -----------------------------------------------------//
 
 //---------------------------------------------- Funciones MAIN --------------------
+
 
 function requestPOST(metodo, parametros, timeout) {
 	try {
@@ -63,7 +72,7 @@ function requestPOST(metodo, parametros, timeout) {
 				\n\t</s:Body>\
 				\n</s:Envelope>'
 		let xmlAdded = '';
-		let retun_ = 'null';
+		var retun_ = 'null';
 
 		for (i in parametros) {
 			xmlAdded += ('\n\t\t\t<' +
@@ -96,21 +105,21 @@ function requestPOST(metodo, parametros, timeout) {
 					let [resp, y] = tmp.split(etiquetaResult_F)
 					retun_ = resp
 				}
-			} catch {}
-		})
+			} catch(e){
+				log.debug(String(e).red);
+			}
+		});
 
-		return new Promise(respuesta => {
-			setTimeout(() => {
-				respuesta(retun_)
-			}, 1000);
-		});
-	} catch {
-		return new Promise(respuesta => {
-			setTimeout(() => {
-				respuesta(null)
-			}, 1000);
-		});
+	} catch(e) {
+		log.debug(String(e).red);
 	}
+
+	return new Promise(respuesta => {
+		setTimeout(() => {
+			log.debug('Respuesta: '.blue + retun_)
+			respuesta(retun_)
+		}, 800);
+	});
 }
 
 function getFilesizeInBytes(filename) {
@@ -119,171 +128,6 @@ function getFilesizeInBytes(filename) {
     return fileSizeInBytes
 }
 //---------------------------------------- Config ----------------------------------------------
-function createConfiginit(confData = null) {
-	var respuesta_json = {"MainFolder":false, "ConfigSuc":false, "ConfigServ":false, "Log":false, "User":false, "envialog":false};
-	try {
-		log.debug('Start config');
-		if (!fs.existsSync(ConfigPATH)) {	// check main path config
-			log.debug('1 - Checking Main Folder:', ConfigPATH);
-			mkdirp(ConfigPATH, function (err) {
-				if (err) log.error(String(err).red + '\nNo existe y no se pudo crear la carpeta de configuración'.red);
-				log.debug('Carpeta de configuracion: '.cyan + ConfigPATH.yellow);
-				respuesta_json["MainFolder"] = true;
-			})
-
-			if (!fs.existsSync(logFile)){
-				const dt = dateTime.create()
-				const hrReg = dt.format('m/d/y H:M')
-				var data =  '############# LOG #############\n' +
-				'\nFecha de creación --> ' + hrReg.magenta + '\n' + '\n***** Espesificaciones del Ususario *****'.green +
-				'\nHostname: '.yellow + String(os.hostname) +
-				'\nUsername: '.yellow + String(os.userInfo().username) +
-				'\nHomeDir: '.yellow + String(os.userInfo().homedir) +
-				'\nPlatform: '.yellow + String(os.platform) +
-				'\nRelease: '.yellow + String(os.release) +
-				'\nArch: '.yellow + String(os.arch) +
-				'\n******************************************'.green + '\n';
-				fs.writeFile(logFile, data, function (err) {
-					if (err) log.error(String(err).red)
-					log.transports.file.file = logFile;
-					log.debug('Log creado: '.cyan + logFile.yellow);
-					respuesta_json["Log"] = true;
-				})
-			}else{
-				log.transports.file.file = logFile;
-				log.debug('Archivo log existe: '.cyan + logFile.yellow);
-				respuesta_json["Log"] = true;logFile
-			}
-			
-			if (!fs.existsSync(ConfigFilejs)){
-				var data = "ping=wshuella.prestamofeliz.com.mx;server=http://wshuella.prestamofeliz.com.mx:9045/WSH.svc";
-				fs.writeFile(ConfigFilejs, data, function (err) {
-					if (err) log.error(String(err).red)
-					log.debug('Archivo de configuracion de coneccion: '.cyan + ConfigFilejs.yellow);
-					respuesta_json["ConfigServ"] = true;
-				})
-			}else{
-				log.debug('Archivo de configuracion de coneccion: '.cyan + ConfigFilejs.yellow);
-				respuesta_json["ConfigServ"] = true;
-			}
-			
-			// Create config encripted data
-			if(confData != null){
-				log.debug('Creando configuracion encriptada');
-				if (!fs.existsSync(ConfigFile)) fs.writeFile(ConfigFile, confData, function (err) {
-					if (err) log.error(String(err).red)
-					log.debug('Archivo de configuracion Sucursal creado: '.cyan + ConfigFile.yellow);
-					respuesta_json["ConfigSuc"] = true;
-				})
-			}else{
-				log.debug('Archivo de configuracion Sucursal creado: '.cyan + ConfigFile.yellow);
-				respuesta_json["ConfigSuc"] = true;
-			}
-
-
-			if (fs.existsSync(UserFile)) {
-				fs.unlinkSync(UserFile);
-				log.debug('El archivo de usuario encontrado y borrado'.cyan + UserFile.yellow);
-				respuesta_json["User"] = true;
-			} else {
-				log.debug('El archivo de usuario no existe [OK] '.cyan + UserFile.yellow);
-				respuesta_json["User"] = true;
-			}
-		}else{
-			log.debug('2 - Checking Main Folder:', ConfigPATH);
-			if (!fs.existsSync(logFile)){
-				const dt = dateTime.create()
-				const hrReg = dt.format('m/d/y H:M')
-				var data =  '############# LOG #############\n' +
-				'\nFecha de creación --> ' + hrReg.magenta + '\n' + '\n***** Espesificaciones del Ususario *****'.green +
-				'\nHostname: '.yellow + String(os.hostname) +
-				'\nUsername: '.yellow + String(os.userInfo().username) +
-				'\nHomeDir: '.yellow + String(os.userInfo().homedir) +
-				'\nPlatform: '.yellow + String(os.platform) +
-				'\nRelease: '.yellow + String(os.release) +
-				'\nArch: '.yellow + String(os.arch) +
-				'\n******************************************'.green + '\n';
-				fs.writeFile(logFile, data, function (err) {
-					if (err) log.error(String(err).red)
-					log.transports.file.file = logFile;
-					log.debug('Log creado: '.cyan + logFile.yellow);
-					respuesta_json["Log"] = true;
-				})
-			}else{
-				var logsize = getFilesizeInBytes(logFile);
-				var filestat = fs.statSync(logFile)
-				var fileSizeInMb = filesize(filestat.size, {round: 0});
-
-				let [size, label] = fileSizeInMb.split(' ');
-
-				log.debug('Tamaño actual del log:'.magenta, logsize, 'kB');
-				log.debug('Tamaño actual del log:'.magenta, fileSizeInMb);
-
-				if(label == 'MB'){
-					log.debug('Archivo Log en MB!');
-					if(size > 20) {
-						log.debug('Archivo de log muy grande'.red);
-						respuesta_json["envialog"] = true
-					}else{
-						log.debug('Archivo de log OK'.green);
-					}
-				}else{
-					log.debug('Archivo Log en kB!');
-					log.debug('Archivo de log OK'.green);
-				}
-				
-				log.transports.file.file = logFile;
-				log.debug('Archivo log existe: '.cyan + logFile.yellow);
-				respuesta_json["Log"] = true;
-			}
-			log.debug('Carpeta de configuracion: '.cyan + ConfigPATH.yellow);
-			if (!fs.existsSync(ConfigFilejs)){
-				var data = "ping=wshuella.prestamofeliz.com.mx;server=http://wshuella.prestamofeliz.com.mx:9045/WSH.svc";
-				fs.writeFile(ConfigFilejs, data, function (err) {
-					if (err) log.error(String(err).red)
-					log.debug('Archivo de configuracion de coneccion: '.cyan + ConfigFilejs.yellow);
-					respuesta_json["ConfigServ"] = true;
-				})
-			}else{
-				log.debug('Archivo de configuracion de coneccion: '.cyan + ConfigFilejs.yellow);
-				respuesta_json["ConfigServ"] = true;
-			}
-			
-			// Create config encripted data
-			if(confData != null){
-				log.debug('Creando configuracion encriptada');
-				if (!fs.existsSync(ConfigFile)) fs.writeFile(ConfigFile, confData, function (err) {
-					if (err) log.error(String(err).red)
-					log.debug('Archivo de configuracion Sucursal creado: '.cyan + ConfigFile.yellow);
-					respuesta_json["ConfigSuc"] = true;
-				})
-			}else{
-				log.debug('Archivo de configuracion Sucursal creado: '.cyan + ConfigFile.yellow);
-				respuesta_json["ConfigSuc"] = true;
-			}
-
-			if (fs.existsSync(UserFile)) {
-				fs.unlinkSync(UserFile);
-				log.debug('El archivo de usuario encontrado y borrado'.cyan + UserFile.yellow);
-				respuesta_json["User"] = true;
-			} else {
-				log.debug('El archivo de usuario no existe [OK] '.cyan + UserFile.yellow);
-				respuesta_json["User"] = true;
-			}
-
-			respuesta_json["MainFolder"] = true;
-		}
-	} catch (e) {
-		log.error(String(e).red)
-		// errorConfig('Hubo un error con la configuracion de la aplicación')
-	}
-		
-	return new Promise(respuesta => {
-        setTimeout(() => {
-            respuesta(respuesta_json);
-        }, 500);
-    });
-}
 
 function extractConfig() {
 	try {
@@ -324,98 +168,38 @@ function extractConfig() {
 
 //------------------------------------ Start App -----------------------------
 function start() {
-	checkInt.resolve(urlP, function (err) {
-		if (err) {
-			log.error(String(err).red)
-			errorConServer()
-		} else {
-			log.info('\n' + MessagePrompt_P.yellow + '\n' + MessagePrompt_F.blue)
-			log.info('----------------------- Iniciando Aplicacion -----------------------\n'.magenta)
-			log.debug('Folder Main de la aplicación ----> '.cyan + String(ConfigPATH).yellow + ' ----->'.cyan + ' [ENCONTRADO]'.green);
-			try {
-				if (fs.existsSync(ConfigFile)) {
-					log.debug('Archivo de configuracion '.cyan + String(ConfigFile).yellow + ' ----->'.cyan + ' [ENCONTRADO]'.green);
-					extractConfig();
-				} else {
-					log.debug('Archivo de configuración no encontrado'.red);
-					macaddress.one(async function (err, mac) {
-						const parametro = [{
-							param: 'mac',
-							value: String(mac)
-						}];
-						const timeout = 3000;
-						const metodo = 'ObtenerConfig';
-						const respuesta = await requestPOST(metodo, parametro, timeout);
-						log.debug('\nRespuesta: '.blue + String(respuesta).grey);
-						if (respuesta != 'null') {
-							try {
-								let [idE, idS] = respuesta.split(',');
-								let [x, empresaID] = idE.split(':');
-								let [y, sucursalID] = idS.split(':');
-								log.debug('Cifrando configuracion...'.cyan);
-								const encryconf = cry.encrypt(String(respuesta));
-								log.debug('Configuracion encriptada: '.cyan, String(encryconf).green);
-								createConfiginit(encryconf);
-								log.info('Redirigiendo a la pantalla principal'.magenta);
-								setTimeout(() => {
-									createWindow()
-								}, 2000)
-							} catch (e) {
-								log.error(String(e).red + '\nERROR funct INICIAL'.red);
-								configWindow();
-							}
-						} else {
-							configWindow();
-						}
-					})
-				}
-			} catch (e) {
-				log.error(String(e).red);
-				log.info('[-] ERROR al obtener la configuracio,, la aplicaicon se reiniciará');
-				log.silly('');
-			}
+	// macaddress.all(function (err, all) {
+	// 	macs = JSON.stringify(all, null, 2)
+	// 	log.debug(macs);
+	// });
+
+	log.debug('Revisando coneccion al servidor'.blue, urlP.yellow);
+	
+	log.debug('PING');
+	ping.sys.probe(urlP, function(isAlive){
+		if(isAlive == true){
+			log.debug('PONG');
+			log.debug();
+			log.debug('Iniciando aplicacion'.yellow);
+			createWindow();
+		}else{
+			log.debug('Server death');
+			errorConServer();
 		}
-	});
+    });
+	// checkInt.resolve(urlP, function (err) {
+	// 	if (err) {
+	// 		log.error(String(err).red)
+	// 		errorConServer()
+	// 	} else {
+	// 		log.info('----------------------- Iniciando Aplicacion -----------------------\n'.magenta)
+	// 		log.debug('Folder Main de la aplicación ----> '.cyan + String(ConfigPATH).yellow + ' ----->'.cyan + ' [ENCONTRADO]'.green);
+	// 		createWindow()
+	// 	}
+	// });
 }
 
 //--------------------------------- Otros
-ipcMain.on('ConfirmDialog', (event, message, details) => {
-	const options = {
-		type: 'question',
-		buttons: ['Aceptar', 'Cancelar'],
-		defaultId: 1,
-		title: 'Control de asistencia',
-		message: message,
-		detail: details,
-	}
-
-	dialog.showMessageBox(null, options, (response) => {
-		if (response == 0) {
-			event.reply('confirm-dialog-response', 'acept')
-		} else {
-			event.reply('confirm-dialog-response', 'decline')
-		}
-	})
-})
-
-ipcMain.on('ConfirmDialog-Horario', (event, message, details) => {
-	const options = {
-		type: 'question',
-		buttons: ['Aceptar', 'Cancelar'],
-		defaultId: 1,
-		title: 'Control de asistencia',
-		message: message,
-		detail: details,
-	}
-
-	dialog.showMessageBox(null, options, (response) => {
-		if (response == 0) {
-			event.reply('respuesta-dialog-horario', 'acept')
-		} else {
-			event.reply('respuesta-dialog-horario', 'decline')
-		}
-	})
-})
 
 //---------------------------------------- Pantalla alterna de configuracion ----------------------------------------------
 menuconfiginit = [{
@@ -452,30 +236,7 @@ function configWindow() {
 
 //-------------------------------------------------- Main window ----------------------------------------------------------//
 const isMac = process.platform === 'darwin'
-menuTemplate = [{
-		label: 'Menú',
-		submenu: [{
-			label: 'Login',
-			click: () => {
-				if (loginBool[0] == true) login()
-				if (loginBool[1] == true) winlogin.focus()
-				setTimeout(closeLogin, 60000)
-			}
-		}]
-	}
-	// ,
-	// {
-	// 	label: 'Ayuda',
-	// 	submenu: [{
-	// 		label: 'Buscar Actualización',
-	// 			click: () => {
-	// 				log.debug('--- Btn Actualizar, Buscando Actualización ---')
-	// 				buscarActualizacion()
-	// 			}
-	// 		}
-	// 	]
-	// }
-]
+
 let mainWindow
 
 function createWindow() {
@@ -499,8 +260,33 @@ function createWindow() {
 		slashes: true
 	}))
 	// Activar la barra menú
-	var menu = Menu.buildFromTemplate(menuTemplate)
-	mainWindow.setMenu(menu)
+	// var menu = Menu.buildFromTemplate(menuTemplate)
+	// mainWindow.setMenu(menu)
+	Menu.setApplicationMenu(Menu.buildFromTemplate([
+		{
+			label: 'Menú',
+			submenu: [{
+				label: 'Login',
+				click: () => {
+					if (loginBool[0] == true) login()
+					if (loginBool[1] == true) winlogin.focus()
+					setTimeout(closeLogin, 60000)
+				}
+			}]
+		}
+	// ,
+	// {
+	// 	label: 'Ayuda',
+	// 	submenu: [{
+	// 		label: 'Buscar Actualización',
+	// 			click: () => {
+	// 				log.debug('--- Btn Actualizar, Buscando Actualización ---')
+	// 				buscarActualizacion()
+	// 			}
+	// 		}
+	// 	]
+	// }
+]));
 
 	mainWindow.on('closed', () => {
 		if (empleados_open == false) {
@@ -709,9 +495,293 @@ function empleadosAdmin() {
 	})
 }
 
+// Crear archivos para que la app esté correctamente configurada
+function getMacAndIp(){
+
+	macaddress.one(function (err, macadd) {
+		mac = macadd;
+		log.debug('Macaddress, ', mac);
+	});
+
+	Object.keys(ifaces).forEach(function (ifname) {
+		var alias = 0;
+
+		ifaces[ifname].forEach(function (iface) {
+			if ('IPv4' !== iface.family || iface.internal !== false) {
+			// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+			return;
+			}
+
+			log.debug('-------------------------------------------------------------'.blue)
+			if (alias >= 1) {
+				// this single interface has multiple ipv4 addresses
+				iplocal = iface.address;
+				// mac = iface.mac;
+				log.debug('Intefaz:'.magenta, ifname);
+				// log.debug('MacAddress:'.yellow, iface.mac);
+				log.debug('IP Local:'.yellow, iface.address);
+			} else {
+				// this interface has only one ipv4 adress
+				iplocal = iface.address;
+				// mac = iface.mac;
+				log.debug('Intefaz:'.magenta, ifname);
+				// log.debug('MacAddress:'.yellow, iface.mac);
+				log.debug('IP Local:'.yellow, iface.address);
+			}
+			++alias;
+		});
+	});
+	log.debug('-------------------------------------------------------------'.blue)
+}
+function createLog(){
+	const dt = dateTime.create();
+	const hrReg = dt.format('m/d/y H:M');
+	var data =  '--------------------------------------------------- LOG ---------------------------------------------------\n'.blue +
+	'\nFecha de creación --> ' + hrReg.magenta + '\n' + '\n***** Espesificaciones del Ususario *****'.green +
+	'\nHostname: '.yellow + String(os.hostname) +
+	'\nUsername: '.yellow + String(os.userInfo().username) +
+	'\nHomeDir: '.yellow + String(os.userInfo().homedir) +
+	'\nPlatform: '.yellow + String(os.platform) +
+	'\nRelease: '.yellow + String(os.release) +
+	'\nArch: '.yellow + String(os.arch) +
+	'\n******************************************'.green + '\n' + MessagePrompt_P.yellow + '\n' + MessagePrompt_F.blue + '\n';
+	fs.writeFile(logFile, data, function (err) {
+		if (err) log.error(String(err).red);
+		log.transports.file.file = logFile;
+		log.debug('Log creado: '.cyan + logFile.yellow);
+		log.info()
+	});
+}
+
+async function validateConfig(){
+
+	if (!fs.existsSync(ConfigPATH)) {	// check main path config
+		mkdirp(ConfigPATH);
+		log.debug('Carpeta de configuracion: '.cyan + ConfigPATH.yellow);
+	}
+
+	log.debug('Revisando directorio main de configuracion de la app', ConfigPATH.yellow);
+
+	if (!fs.existsSync(logFile)){
+		log.debug('Creando log'.green);
+		createLog();
+		log.debug('... Log habilitado c: ! ...'.magenta, logFile.yellow);
+		log.debug();
+	}else{
+		var logsize = getFilesizeInBytes(logFile);
+		var filestat = fs.statSync(logFile);
+		var fileSizeInMb = filesize(filestat.size, {round: 0});
+
+		let [size, label] = fileSizeInMb.split(' ');
+
+		log.debug('Tamaño actual del log:'.magenta, logsize, 'kB');
+		log.debug('Tamaño actual del log:'.magenta, fileSizeInMb);
+
+		if(label == 'MB'){
+			log.debug('Archivo Log en MB!');
+			if(size > 20) {
+				log.debug('Archivo de log muy grande'.red);
+				fs.unlinkSync(logFile);
+				createLog();
+			}else{
+				log.debug('Archivo de log OK'.green);
+			}
+		}else{
+			log.debug('Archivo Log en kB!');
+			log.debug('Archivo de Log OK'.green);
+		}
+		
+		log.transports.file.file = logFile;
+		log.debug('... Log habilitado c: ! ...'.magenta, logFile.yellow);
+		log.debug('');
+		log.debug('');
+		log.debug('');
+		const dt = dateTime.create();
+		const time = dt.format('m/d/y H:M');
+		log.debug('======================================================================================================================='.blue);
+		log.debug('======================================='.blue, 'Inicializando aplicacion'.yellow, time.green, '======================================='.blue);
+	}
+
+	const versionApp = app.getVersion();		
+	log.debug("-> ".green, "Version de la app:".green, versionApp.magenta);
+	log.debug('------------------------------------------------------------------'.grey);
+	log.debug('Url PING:'.green, urlP.blue);
+	log.debug('Url Serv:'.green, urlL.blue);
+	
+	if (!fs.existsSync(ConfigFilejs)){
+		var data = "ping=" + urlP + ";server=" + urlL ;
+		fs.writeFile(ConfigFilejs, data, function (err) {
+			if (err) log.error(String(err).red)
+			log.debug('Archivo de configuracion serv: '.cyan + ConfigFilejs.yellow);
+		})
+	}else{
+		log.debug('Archivo de configuracion de coneccion: '.cyan + ConfigFilejs.yellow);
+	}
+
+	getMacAndIp();
+
+	if (fs.existsSync(UserFile)) {
+		fs.unlinkSync(UserFile);
+		log.debug('El archivo de usuario encontrado y borrado'.cyan + UserFile.yellow);
+	} else {
+		log.debug('El archivo de usuario no existe [OK] '.cyan + UserFile.yellow);
+	}
+
+
+	if (!fs.existsSync(ConfigFile)) {
+			
+		macaddress.one(async function (err, mac) {
+			log.debug('Macaddress, ', mac);
+			const parametro = [{
+				param: 'mac',
+				value: String(mac)
+			}];
+			const timeout = 1000;
+			const metodo = 'ObtenerConfig';
+			const respuesta = await requestPOST(metodo, parametro, timeout);
+			
+			var encryconf;
+			if (respuesta != 'null') {
+				try {
+					log.debug('Leyendo configuración obtenida del servidor'.green);
+					let [idE, idS] = respuesta.split(',');
+					let [x, empresaID] = idE.split(':');
+					let [y, sucursalID] = idS.split(':');
+		
+					log.debug('...Cifrando configuracion...'.gray);
+					encryconf = cry.encrypt(String(respuesta));
+					log.debug('Configuracion encriptada: '.cyan, String(encryconf).green);
+		
+					if (!fs.existsSync(ConfigFile)) fs.writeFile(ConfigFile, encryconf, function (err) {
+						if (err) log.error(String(err).red)
+						log.debug('Archivo de configuracion Sucursal creado: '.cyan + ConfigFile.yellow);
+
+						start();
+
+					})
+		
+				} catch (e) {
+					log.error(String(e).red + '\nError al obtener config'.red);
+					log.debug('Archivo de configuracion NO Sucursal creado: '.cyan + ConfigFile.red);
+				}
+			}else{
+				configWindow();
+			}
+			
+		});
+	} else {
+		start();
+	}
+	
+
+
+	// try{
+	// 	log.debug('FS status:', statusFS);
+
+	// 	if(statusFS["envialog"] == true){
+	// 		macaddress.one(function (err, mac) {
+	// 			const versionApp = app.getVersion();		
+	// 			log.debug("Version de la app:", versionApp);
+	// 			log.debug("MacAddress del equipo:", mac);
+	// 			log.debug("Enviando log");
+	// 			// ENVIR LOG
+	// 			log.debug("Borrando log");
+	// 			fs.unlinkSync(logFile);
+	// 			app.relaunch();
+	// 			app.quit();
+	// 		});
+	// 	}else{	
+	// 		macaddress.one(function (err, mac) {
+	// 			const versionApp = app.getVersion();
+	// 			log.debug("Version de la app:".yellow, versionApp);
+	// 			log.debug("MacAddress del equipo:".yellow, mac);
+	// 		})
+			
+	// 		log.debug("Borrando log");
+	// 		if(statusFS["ConfigServ"] == true) {
+	// 			log.debug('Servidor configFile ->', ConfigFilejs);
+	// 			try {
+	// 				const readInterface = readline.createInterface({
+	// 					input: fs.createReadStream(ConfigFilejs),
+	// 					output: process.stdout,
+	// 					console: false
+	// 				});
+			
+	// 				try {
+	// 					readInterface.on('line', function (line) {
+	// 						let [confP, confS] = line.split(';');
+	// 						let [x, IPP] = confP.split('=');
+	// 						let [z, IPS] = confS.split('=');
+	// 						urlP = IPP;
+	// 						urlL = IPS;
+	// 						log.info('IP del Pruebas Internet: ', urlP.yellow);
+	// 						log.info('IP del Servidor: ', urlL.yellow);			
+	// 						start();
+	// 					});	
+	// 				} catch (e) {
+	// 					log.error(String(e).red);
+	// 					log.silly('');
+	// 					urlL = null;
+	// 					urlP = null;
+	// 					errorConfig('No se pudo leer la configuracion de la aplicación');
+	// 				}
+	// 			} catch (e) {
+	// 				log.error(String(e).red);
+	// 				log.info('[-] ERROR al obtener la configuracio,, la aplicaicon se reiniciará');
+	// 				log.silly('');
+	// 				errorConfig('No se pudo leer la configuracion de la aplicación');
+	// 			}
+	// 		}
+	// 		if(statusFS["Log"] == true) {
+	// 			log.transports.file.file = logFile;
+	// 			log.debug('Regirigiendo log...');
+	// 		}	
+	// 	}
+	// }catch(e){
+	// 	errorConfig('No se pudo leer la configuracion de la aplicación');
+	// 	log.error(String(e));
+	// }
+}
+
 
 
 //----------------------------------------- IPC MAIN ------------------------------------//
+ipcMain.on('ConfirmDialog', (event, message, details) => {
+	const options = {
+		type: 'question',
+		buttons: ['Aceptar', 'Cancelar'],
+		defaultId: 1,
+		title: 'Control de asistencia',
+		message: message,
+		detail: details,
+	}
+
+	dialog.showMessageBox(null, options, (response) => {
+		if (response == 0) {
+			event.reply('confirm-dialog-response', 'acept')
+		} else {
+			event.reply('confirm-dialog-response', 'decline')
+		}
+	})
+});
+ipcMain.on('ConfirmDialog-Horario', (event, message, details) => {
+	const options = {
+		type: 'question',
+		buttons: ['Aceptar', 'Cancelar'],
+		defaultId: 1,
+		title: 'Control de asistencia',
+		message: message,
+		detail: details,
+	}
+
+	dialog.showMessageBox(null, options, (response) => {
+		if (response == 0) {
+			event.reply('respuesta-dialog-horario', 'acept')
+		} else {
+			event.reply('respuesta-dialog-horario', 'decline')
+		}
+	})
+});
 ipcMain.on('entry-accepted', (event, arg) => {
 	if (arg = 'ping') {
 
@@ -757,7 +827,6 @@ ipcMain.on('config', (event, arg) => {
 	app.relaunch()
 	app.quit()
 })
-
 ipcMain.on('statusSensor', (event, arg) => {
 	log.debug('MAIN - sensor status');
 
@@ -773,88 +842,34 @@ ipcMain.on('statusSensor', (event, arg) => {
 	// app.relaunch();
 	// app.quit();
 })
+ipcMain.on('app_version', (event) => {
+	log.debug('Checking for updates-------');
+	autoUpdater.checkForUpdatesAndNotify();
+	event.sender.send('app_version', {
+		version: app.getVersion()
+	});
+});
+ipcMain.on('restart_app', () => {
+	autoUpdater.quitAndInstall();
+});
 
-async function validateConfig(){
-	try{
-		const statusFS = await createConfiginit();
-		log.debug('FS status:', statusFS);
-
-		if(statusFS["envialog"] == true){
-			macaddress.one(function (err, mac) {
-				const versionApp = app.getVersion();		
-				log.debug("Version de la app:", versionApp);
-				log.debug("MacAddress del equipo:", mac);
-				log.debug("Enviando log");
-				// ENVIR LOG
-				log.debug("Borrando log");
-				fs.unlinkSync(logFile);
-				app.relaunch();
-				app.quit();
-			});
-		}else{
-			if(statusFS["ConfigServ"] == true) {
-				log.debug('Servidor configFile ->', ConfigFilejs);
-				try {
-					const readInterface = readline.createInterface({
-						input: fs.createReadStream(ConfigFilejs),
-						output: process.stdout,
-						console: false
-					});
-			
-					try {
-						readInterface.on('line', function (line) {
-							let [confP, confS] = line.split(';');
-							let [x, IPP] = confP.split('=');
-							let [z, IPS] = confS.split('=');
-							urlP = IPP;
-							urlL = IPS;
-							log.info('IP del Pruebas Internet: ', urlP.yellow);
-							log.info('IP del Servidor: ', urlL.yellow);			
-							start();
-						});	
-					} catch (e) {
-						log.error(String(e).red);
-						log.silly('');
-						urlL = null;
-						urlP = null;
-						errorConfig('No se pudo leer la configuracion de la aplicación');
-					}
-				} catch (e) {
-					log.error(String(e).red);
-					log.info('[-] ERROR al obtener la configuracio,, la aplicaicon se reiniciará');
-					log.silly('');
-					errorConfig('No se pudo leer la configuracion de la aplicación');
-				}
-			}
-			if(statusFS["Log"] == true) {
-				log.transports.file.file = logFile;
-				log.debug('Regirigiendo log...');
-			}	
-		}
-	}catch(e){
-		errorConfig('No se pudo leer la configuracion de la aplicación');
-		log.error(String(e));
-	}
+//----------------------------------- AUTOUPDATER SECCION -----------------------------------
+autoUpdater.setFeedURL({ provider: 'github'
+, owner: 'artxro'
+, repo: 'control_asistenciaPF'
+, token: '09276baef6c34bbbc9a145030f6fc69f6fc7cd36'
+, private: true });
+autoUpdater.allowDowngrade = false
+autoUpdater.on('update-available', () => {
+	mainWindow.webContents.send('update_available');
+});
+autoUpdater.on('update-downloaded', () => {
+	mainWindow.webContents.send('update_downloaded');
+});
+function buscarActualizacion() {
+	log.debug('Version:', app.getVersion());
+	autoUpdater.checkForUpdatesAndNotify();
 }
-
-//----------------------------------------- App funtions escencials ------------------------------------//
-app.on('ready', () => {
-	validateConfig();
-})
-app.on('window-all-closed', () => {
-	try {
-		if (fs.existsSync(UserFile)) {
-			fs.unlinkSync(UserFile)
-		}
-		if (fs.existsSync(ConfigFilejs)) {
-			fs.unlinkSync(ConfigFilejs)
-		}
-	} catch (e) {
-		log.info('')
-	}
-	app.quit()
-})
-
 
 //----------------------------------- ERROR SECCION -----------------------------------
 function errorConServer() {
@@ -908,38 +923,22 @@ function errorSensor(details) {
 		log.debug('Opcion Elegida:'.magenta, response);
 	})
 }
-//----------------------------------- AUTOUPDATER SECCION -----------------------------------
-autoUpdater.setFeedURL({ provider: 'github'
-, owner: 'artxro'
-, repo: 'control_asistenciaPF'
-, token: '09276baef6c34bbbc9a145030f6fc69f6fc7cd36'
-, private: true });
-
-autoUpdater.allowDowngrade = false
 
 
-function buscarActualizacion() {
-	log.debug('Version:', app.getVersion());
-	autoUpdater.checkForUpdatesAndNotify();
-}
-
-ipcMain.on('app_version', (event) => {
-	log.debug('Checking for updates-------');
-	autoUpdater.checkForUpdatesAndNotify();
-	event.sender.send('app_version', {
-		version: app.getVersion()
-	});
-});
-
-autoUpdater.on('update-available', () => {
-	mainWindow.webContents.send('update_available');
-});
-autoUpdater.on('update-downloaded', () => {
-	mainWindow.webContents.send('update_downloaded');
-});
-
-ipcMain.on('restart_app', () => {
-	autoUpdater.quitAndInstall();
-});
-
-
+//----------------------------------------- App funtions escencials ------------------------------------//
+app.on('ready', () => {
+	validateConfig();
+})
+app.on('window-all-closed', () => {
+	try {
+		if (fs.existsSync(UserFile)) {
+			fs.unlinkSync(UserFile)
+		}
+		if (fs.existsSync(ConfigFilejs)) {
+			fs.unlinkSync(ConfigFilejs)
+		}
+	} catch (e) {
+		log.info('#####################################\nNo se borraron los archivos'.red)
+	}
+	app.quit()
+})
