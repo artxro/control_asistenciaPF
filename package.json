@@ -14,7 +14,7 @@
     "start": "electron .",
     "build": "electron-builder build --win --x64 --ia32 --publish never",
     "build32": "electron-builder build --win --ia32 --publish never",
-    "deploy": "electron-builder build --win --publish always",
+    "deploy": "electron-builder build --win --ia32 --publish always",
     "compress": "cd .. && tar -zcvf Release/control-asistenciaVF.tar.gz control-asistenciaVF",
     "package": "electron-packager . control-asistencia --overwrite --out=packaged --ignore='^/dist$' --prune --platform=linux --arch=x64 --icon=assets/icons/Logo.icns --disable-gpu"
   },
