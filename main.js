@@ -1,29 +1,25 @@
 //-------------------------------------------- MODULES ---------------------------------------//
-const electron = require('electron');
-const { app, BrowserWindow, Menu } = electron
-const {	ipcRenderer } = require('electron');
-const { ipcMain } = require('electron');
-const {	dialog } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain , ipcRenderer, dialog} = require('electron');
 const {	autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 const colors = require('colors');
-const fs = require('fs');
-const filesize = require("filesize"); 
-const path = require('path');
-const mkdirp = require('mkdirp');
-const url = require('url');
 const macaddress = require('macaddress');
-const os = require('os');
+const fs = require('fs');
+const filesize = require("filesize");
 const base64 = require('base-64');
-// const checkInt = require('dns');
 const ping = require('ping');
-const request = require('request');
 const Cyr = require('cryptr');
-const readline = require('readline');
 const dateTime = require('node-datetime');
 const $ = require('jquery');
 
-require('electron-reload')(__dirname); // Desarrollo stuff Actualizacion de codigo automatica en cambios 
+const os = require('os');
+const mkdirp = require('mkdirp');
+const path = require('path');
+const url = require('url');
+
+// const readline = require('readline');
+
+require('electron-reload')(__dirname); // Desarrollo stuff Actualizacion de pantalla automatica en cambios 
 
 // Fix gpu Error ...
 // app.commandLine.appendSwitch('disable-gpu');
@@ -31,7 +27,7 @@ require('electron-reload')(__dirname); // Desarrollo stuff Actualizacion de codi
 //---------- VARIABLES MAIN ----------------//
 const ifaces = os.networkInterfaces();
 
-const ConfigPATH = os.homedir + '/.config/Control-Asistencia';
+const ConfigPATH = os.homedir + '/.config/Control-Asistencia'; // Carpeta principal de configuracion
 const ConfigFile = ConfigPATH + '/config';
 const UserFile = ConfigPATH + '/user';
 const ConfigFilejs = ConfigPATH + '/conect.conf';
@@ -55,6 +51,7 @@ const urlL = 'http://wshuella.prestamofeliz.com.mx:9045/WSH.svc';
 // const urlL = 'http://workpc:45455/WSH.svc';
 
 
+
 //---------------------------------------------------- PROMTP ----------------------------------------------//
 const MessagePrompt_P = 'd8888b. d8888b. d88888b .d8888. d888888b  .d8b.  .88b  d88.  .d88b.  \n88  `8D 88  `8D 88      88   YP `~~88~~  d8  `8b 88 YbdP`88 .8P  Y8.  \n88oodD  88oobY  88ooooo `8bo.      88    88ooo88 88  88  88 88    88  \n88~~~   88`8b   88~~~~~   `Y8b.    88    88~~~88 88  88  88 88    88  \n88      88 `88. 88.     db   8D    88    88   88 88  88  88 `8b  d8   \n88      88   YD Y88888P `8888Y     YP    YP   YP YP  YP  YP  `Y88P'
 const MessagePrompt_F = 'd88888b d88888b db      d888888b d88888D \n88      88      88        `88    YP  d8   \n88ooo   88ooooo 88         88       d8    \n88~~~   88~~~~~ 88         88      d8     \n88      88.     88booo.   .88.    d8  db  \nYP      Y88888P Y88888P Y888888P d88888P'
@@ -63,69 +60,82 @@ const MessagePrompt_F = 'd88888b d88888b db      d888888b d88888D \n88      88  
 //---------------------------------------------- Funciones MAIN --------------------
 
 
-function requestPOST(metodo, parametros, timeout) {
-	try {
-		const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
-		\n\t<s:Body>\
-		\n\t\t<' + metodo + ' xmlns="http://tempuri.org/">'
-		const xmlBody_F = '\n\t\t</' + metodo + '>\
-				\n\t</s:Body>\
-				\n</s:Envelope>'
-		let xmlAdded = '';
-		var retun_ = 'null';
+function requestPOST(metodo, parametros, timeout, timeout_r = 2000) {
+    return new Promise((resolve, reject) => {
+        try {
+            log.debug('');
+            log.debug('-------------------------------------------------------------------------------------'.magenta);
+            const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
+                                \n\t<s:Body>\
+                                \n\t\t<' + metodo + ' xmlns="http://tempuri.org/">';
+            const xmlBody_F = '\n\t\t</' + metodo + '>\
+                                \n\t</s:Body>\
+                                \n</s:Envelope>';
+            let xmlAdded = '';
+            let retun_ = '';
+    
+            for (i in parametros) {
+                xmlAdded += ('\n\t\t\t<' +
+                    parametros[i].param +
+                    '>' + parametros[i].value +
+                    '</' +
+                    parametros[i].param +
+                    '>');
+            }
+    
+            const xml = xmlBody_I + xmlAdded + xmlBody_F;
+    
+            log.debug('Datos del post'.blue);
+            log.debug('xml'.cyan, xml);
+            log.debug('metodo'.cyan, metodo);
+            log.debug('url'.cyan, ipServ);
 
-		for (i in parametros) {
-			xmlAdded += ('\n\t\t\t<' +
-				parametros[i].param +
-				'>' + parametros[i].value +
-				'</' +
-				parametros[i].param +
-				'>');
-		}
-
-		const xml = xmlBody_I + xmlAdded + xmlBody_F
-		log.debug(xml.yellow);
-
-		request({
-			url: urlL,
-			method: "POST",
-			headers: {
-				"content-type": "text/xml",
-				"SOAPAction": ("http://tempuri.org/ISolicitud/" + metodo),
-			},
-			body: xml,
-			timeout: timeout
-		}, function (error, response, body) {
-			try {
-				log.debug(body.cyan)
-				if (response.statusCode == 200) {
-					const etiquetaResult_I = '<' + metodo + 'Result' + '>'
-					const etiquetaResult_F = '</' + metodo + 'Result' + '>'
-					let [x, tmp] = body.split(etiquetaResult_I)
-					let [resp, y] = tmp.split(etiquetaResult_F)
-					retun_ = resp
-				}
-			} catch(e){
-				log.debug(String(e).red);
-			}
-		});
-
-	} catch(e) {
-		log.debug(String(e).red);
-	}
-
-	return new Promise(respuesta => {
-		setTimeout(() => {
-			log.debug('Respuesta: '.blue + retun_)
-			respuesta(retun_)
-		}, 800);
-	});
+            $.ajax({
+                url: ipServ,
+                type: 'POST',
+                headers: {
+                    "content-type": "text/xml",
+                    "SOAPAction": ("http://tempuri.org/ISolicitud/" + metodo),
+                },
+                timeout: timeout,
+                data: xml,
+                dataType: 'text',
+                success: function (data, status, xhr) {
+                    log.debug(' ');
+                    log.debug('------------------ Leyendo respuesta del servidor ----------------');
+                    log.debug('Estatus de la respuesta'.cyan, status.green);
+                    log.debug('Data - xml'.cyan ,data);
+                    // log.debug(xhr);
+                    const etiquetaResult_I = '<' + metodo + 'Result' + '>'
+                    const etiquetaResult_F = '</' + metodo + 'Result' + '>'
+                    let [x, tmp] = data.split(etiquetaResult_I)
+                    let [resp, y] = tmp.split(etiquetaResult_F)
+                    retun_ = resp
+                    log.debug("Respuesta del metodo:".cyan, retun_.yellow);
+                },
+                error: function (jqXhr, textSat, errorMes) {
+                    log.debug('Estatus de la peticion', errorMes.red);
+                    reject(errorMes);
+                },
+                complete: function (data) {
+                    log.debug('-------------------------------------------------------------------------------------'.magenta);
+                    log.debug('');
+                    resolve(retun_);
+                }
+            });
+        }catch(e){
+            reject(e);
+        }
+    });
 }
 
+
 function getFilesizeInBytes(filename) {
-    var stats = fs.statSync(filename)
-    var fileSizeInBytes = stats["size"]
-    return fileSizeInBytes
+	return new Promise((resolve, reject) => {
+		const stats = fs.statSync(filename);
+		const fileSizeInBytes = stats["size"];
+		resolve(fileSizeInBytes);
+	});
 }
 //---------------------------------------- Config ----------------------------------------------
 
@@ -168,18 +178,11 @@ function extractConfig() {
 
 //------------------------------------ Start App -----------------------------
 function start() {
-	// macaddress.all(function (err, all) {
-	// 	macs = JSON.stringify(all, null, 2)
-	// 	log.debug(macs);
-	// });
-
 	log.debug('Revisando coneccion al servidor'.blue, urlP.yellow);
-	
 	log.debug('PING');
 	ping.sys.probe(urlP, function(isAlive){
 		if(isAlive == true){
 			log.debug('PONG');
-			log.debug();
 			log.debug('Iniciando aplicacion'.yellow);
 			createWindow();
 		}else{
@@ -187,26 +190,13 @@ function start() {
 			errorConServer();
 		}
     });
-	// checkInt.resolve(urlP, function (err) {
-	// 	if (err) {
-	// 		log.error(String(err).red)
-	// 		errorConServer()
-	// 	} else {
-	// 		log.info('----------------------- Iniciando Aplicacion -----------------------\n'.magenta)
-	// 		log.debug('Folder Main de la aplicación ----> '.cyan + String(ConfigPATH).yellow + ' ----->'.cyan + ' [ENCONTRADO]'.green);
-	// 		createWindow()
-	// 	}
-	// });
 }
 
 //--------------------------------- Otros
 
 //---------------------------------------- Pantalla alterna de configuracion ----------------------------------------------
-menuconfiginit = [{
-	label: 'Menú',
-	click: () => {}
-}]
-let configInicialWin
+
+let configInicialWin;
 
 function configWindow() {
 	configInicialWin = new BrowserWindow({
@@ -220,25 +210,27 @@ function configWindow() {
 		show: false,
 		width: 400,
 		height: 500
-	})
-	configInicialWin.loadURL(url.format({
-		pathname: path.join(__dirname, 'html/config.html'),
-		protocol: 'file:',
-		slashes: true
-	}))
-	// configInicialWin.webContents.openDevTools()
-	var menuinit = Menu.buildFromTemplate(menuconfiginit)
-	configInicialWin.setMenu(menuinit)
+	});
+
+	configInicialWin.loadFile('html/config.html');
+	
+	configInicialWin.webContents.openDevTools();
+
+	let menuinit = Menu.buildFromTemplate([{
+		label: 'Menú',
+		click: () => {}
+	}]);
+	configInicialWin.setMenu(menuinit);
+
 	configInicialWin.once('ready-to-show', () => {
-		configInicialWin.show()
-	})
+		configInicialWin.show();
+	});
 }
 
 //-------------------------------------------------- Main window ----------------------------------------------------------//
 const isMac = process.platform === 'darwin'
 
-let mainWindow
-
+let mainWindow;
 function createWindow() {
 	// Nuevo browser window.
 	mainWindow = new BrowserWindow({
@@ -252,16 +244,13 @@ function createWindow() {
 		height: 610,
 		icon: path.join(__dirname, '/assets/icons/png/LogoInstitucional.png')
 	})
-	// mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
+
+	mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
+	
 	// Leer index.html
-	mainWindow.loadURL(url.format({
-		pathname: path.join(__dirname, 'index.html'),
-		protocol: 'file:',
-		slashes: true
-	}))
+	mainWindow.loadFile('index.html');
+	
 	// Activar la barra menú
-	// var menu = Menu.buildFromTemplate(menuTemplate)
-	// mainWindow.setMenu(menu)
 	Menu.setApplicationMenu(Menu.buildFromTemplate([
 		{
 			label: 'Menú',
@@ -294,11 +283,7 @@ function createWindow() {
 		}
 		mainWindow = null
 		log.info('Main Window Cerrada'.magenta)
-	})
-	// mainWindow.once('ready-to-show', () => {
-	// 	log.debug('Checking for updates');
-	//     autoUpdater.checkForUpdatesAndNotify();
-	// });
+	});
 }
 
 //-------------------------------------------------- Login ----------------------------------------------------------//
@@ -315,23 +300,24 @@ function login() {
 		width: 390,
 		height: 560,
 		icon: path.join(__dirname, '/assets/icon/png/LogoInstitucional.png')
-	})
-	winlogin.loadURL(url.format({
-		pathname: path.join(__dirname, '/html/login.html'),
-		protocol: 'file:',
-		slashes: true
-	}))
-	// winlogin.webContents.openDevTools()				//Habilita herramientas de desarrollador
-	winlogin.setMenuBarVisibility(false)
+	});
+
+	winlogin.loadFile('/html/login.html');
+	
+	winlogin.webContents.openDevTools();				//Habilita herramientas de desarrollador
+	
+	winlogin.setMenuBarVisibility(false);
+	
 	winlogin.once('ready-to-show', () => {
 		loginBool = [false, true] // No permite crear otra ventana de Login
 		winlogin.show()
-	})
+	});
+	
 	winlogin.on('closed', () => {
 		winlogin = null
 		loginBool = [true, false] // Permite crear otra ventana de Login
 		log.info('Ventana de login cerrada')
-	})
+	});
 }
 
 function closeLogin() {
@@ -343,9 +329,7 @@ function closeLogin() {
 }
 
 //-------------------------------------------------- Empleados Window ----------------------------------------------------------//
-menuEmpleados = [{
-	label: 'Menú',
-}]
+
 let empleadoswin
 var empleados_open = false;
 
@@ -360,76 +344,74 @@ function empleados() {
 		width: 1500,
 		height: 800,
 		icon: path.join(__dirname, '/assets/icon/png/LogoInstitucional.png')
-	})
-	empleadoswin.loadURL(url.format({
-		pathname: path.join(__dirname, 'html/empleados.html'),
-		protocol: 'file:',
-		slashes: true
-	}))
-	var menu = Menu.buildFromTemplate(menuEmpleados)
-	empleadoswin.setMenu(menu)
-	// empleadoswin.webContents.openDevTools()
-	// empleados.setMenuBarVisibility(false)
+	});
+
+	empleadoswin.loadFile('html/empleados.html');
+
+	empleadoswin.setMenu(menu);
+
+	empleadoswin.webContents.openDevTools();
+
+	var menu = Menu.buildFromTemplate([{
+		label: 'Menú',
+	}]);
+	
 	empleadoswin.once('ready-to-show', () => {
 		empleados_open = true;
-		empleadosBool = [false, true] // Permite crear otra ventana de empleados
+		empleadosBool = [false, true]; // Permite crear otra ventana de empleados
 		empleadoswin.show();
 		mainWindow.close();
-	})
+	});
+
 	empleadoswin.on('closed', () => {
-		log.info('Ventana de Empleados cerrada')
+		log.info('Ventana de Empleados cerrada');
 		empleadosBool = [true, false]; // Permite crear otra ventana de empleados
 		empleadoswin = null;
 		empleados_open = false;
-		app.relaunch()
-	})
+		app.relaunch();
+	});
 }
 
 
 //-------------------------------------------------- Consulta Empleados Window ----------------------------------------------------------//
-menuConEmpleados = [{
-	label: 'Menú',
-	click: () => {
-		//empleados()
-		//conEmpleadoswin.hide()
-	}
-}]
-let conEmpleadoswin
+
+let conEmpleadoswin;
 
 function conEmpleados() {
-	frame: false,
 	conEmpleadoswin = new BrowserWindow({
+		frame: false,
 		parent: mainWindow,
 		modal: true,
 		show: false,
 		width: 1500,
 		height: 800,
 		icon: path.join(__dirname, '/assets/icon/png/LogoInstitucional.png')
-	})
-	conEmpleadoswin.loadURL(url.format({
-		pathname: path.join(__dirname, 'html/consulta_emp.html'),
-		protocol: 'file:',
-		slashes: true
-	}))
-	var menu = Menu.buildFromTemplate(menuConEmpleados)
-	conEmpleadoswin.setMenu(menu)
-	// conEmpleadoswin.webContents.openDevTools()
-	// empleados.setMenuBarVisibility(false)
+	});
+
+	conEmpleadoswin.loadFile('html/consulta_emp.html');
+
+	const menu = Menu.buildFromTemplate([{
+		label: 'Menú',
+		click: () => {
+			//empleados()
+			//conEmpleadoswin.hide()
+		}
+	}]);
+	conEmpleadoswin.setMenu(menu);
+
+	conEmpleadoswin.webContents.openDevTools();
+	
 	conEmpleadoswin.once('ready-to-show', () => {
-		conEmpleadoswin.show()
-	})
+		conEmpleadoswin.show();
+	});
+
 	conEmpleadoswin.on('closed', () => {
-		conEmpleadoswin = null
-	})
+		conEmpleadoswin = null;
+	});
 }
 
 //-------------------------------------------------- Sucursales ----------------------------------------------------------//
-menuSucursales = [{
-	label: 'Menú',
-	click: () => {
-		//Sucursaleswin.hide() 
-	}
-}]
+
 let sucursaleswin
 
 function sucursales() {
@@ -442,37 +424,32 @@ function sucursales() {
 		width: 1500,
 		height: 800,
 		icon: path.join(__dirname, '/assets/icon/png/LogoInstitucional.png')
-	})
-	sucursaleswin.loadURL(url.format({
-		pathname: path.join(__dirname, 'html/sucursales.html'),
-		protocol: 'file:',
-		slashes: true
-	}))
-	var menu = Menu.buildFromTemplate(menuSucursales)
-	//sucursaleswin.setMenu(menu)
-	sucursaleswin.setMenuBarVisibility(false)
+	});
+	
+	sucursaleswin.loadURL('html/sucursales.html');
+
+	let menu = Menu.buildFromTemplate([{
+		label: 'Menú',
+		click: () => {
+			//Sucursaleswin.hide() 
+		}
+	}]);
+
+	sucursaleswin.setMenu(menu);
+	sucursaleswin.setMenuBarVisibility(false);
 	sucursaleswin.once('ready-to-show', () => {
-		sucursaleswin.show()
-	})
+		sucursaleswin.show();
+	});
 }
 
 
 //-------------------------------------------------- Empleados Admin ----------------------------------------------------------//
-menuEmpleadosAdmin = [{
-	label: 'Menu Admin',
-	submenu: [{
-		label: 'Agregar Sucursales',
-		click: () => {
-			sucursales()
-			//empleadoswin.hide()
-		}
-	}]
-}]
-let empleadoswinAdmin
+ 
+let empleadoswinAdmin;
 
 function empleadosAdmin() {
-	frame: false,
 	empleadoswinAdmin = new BrowserWindow({
+		frame: false,
 		webPreferences: {
 			nodeIntegration: true
 		},
@@ -481,79 +458,107 @@ function empleadosAdmin() {
 		width: 1500,
 		height: 800,
 		icon: path.join(__dirname, '/assets/icon/png/LogoInstitucional.png')
-	})
-	empleadoswinAdmin.loadURL(url.format({
-		pathname: path.join(__dirname, 'html/empleados.html'),
-		protocol: 'file:',
-		slashes: true
-	}))
-	var menu = Menu.buildFromTemplate(menuEmpleadosAdmin)
-	empleadoswinAdmin.setMenu(menu)
-	// empleados.setMenuBarVisibility(false)
+	});
+
+	empleadoswinAdmin.loadFile('html/empleados.html');
+
+	let menu = Menu.buildFromTemplate([{
+		label: 'Menu Admin',
+		submenu: [{
+			label: 'Agregar Sucursales',
+			click: () => {
+				sucursales()
+				//empleadoswin.hide()
+			}
+		}]
+	}]);
+	empleadoswinAdmin.setMenu(menu);
+	
 	empleadoswinAdmin.once('ready-to-show', () => {
-		empleadoswinAdmin.show()
-	})
+		empleadoswinAdmin.show();
+	});
 }
+
 
 // Crear archivos para que la app esté correctamente configurada
-function getMacAndIp(){
-
-	macaddress.one(function (err, macadd) {
-		mac = macadd;
-		log.debug('Macaddress, ', mac);
-	});
-
-	Object.keys(ifaces).forEach(function (ifname) {
-		var alias = 0;
-
-		ifaces[ifname].forEach(function (iface) {
-			if ('IPv4' !== iface.family || iface.internal !== false) {
-			// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-			return;
-			}
-
-			log.debug('-------------------------------------------------------------'.blue)
-			if (alias >= 1) {
-				// this single interface has multiple ipv4 addresses
-				iplocal = iface.address;
-				// mac = iface.mac;
-				log.debug('Intefaz:'.magenta, ifname);
-				// log.debug('MacAddress:'.yellow, iface.mac);
-				log.debug('IP Local:'.yellow, iface.address);
-			} else {
-				// this interface has only one ipv4 adress
-				iplocal = iface.address;
-				// mac = iface.mac;
-				log.debug('Intefaz:'.magenta, ifname);
-				// log.debug('MacAddress:'.yellow, iface.mac);
-				log.debug('IP Local:'.yellow, iface.address);
-			}
-			++alias;
+function createLog(){
+	return new Promise((resolve, reject) => {
+		const dt = dateTime.create();
+		const hrReg = dt.format('m/d/y H:M');
+		var data =  '--------------------------------------------------- LOG ---------------------------------------------------\n'.blue +
+		'\nFecha de creación --> ' + hrReg.magenta + '\n' + '\n***** Espesificaciones del Ususario *****'.green +
+		'\nHostname: '.yellow + String(os.hostname) +
+		'\nUsername: '.yellow + String(os.userInfo().username) +
+		'\nHomeDir: '.yellow + String(os.userInfo().homedir) +
+		'\nPlatform: '.yellow + String(os.platform) +
+		'\nRelease: '.yellow + String(os.release) +
+		'\nArch: '.yellow + String(os.arch) +
+		'\n******************************************'.green + '\n' + MessagePrompt_P.yellow + '\n' + MessagePrompt_F.blue + '\n';
+		fs.writeFile(logFile, data, function (err) {
+			if (err) log.error(String(err).red);
+			log.transports.file.file = logFile;
+			log.debug('Log creado: '.cyan + logFile.yellow);
+			resolve('OK');
 		});
 	});
-	log.debug('-------------------------------------------------------------'.blue)
 }
-function createLog(){
-	const dt = dateTime.create();
-	const hrReg = dt.format('m/d/y H:M');
-	var data =  '--------------------------------------------------- LOG ---------------------------------------------------\n'.blue +
-	'\nFecha de creación --> ' + hrReg.magenta + '\n' + '\n***** Espesificaciones del Ususario *****'.green +
-	'\nHostname: '.yellow + String(os.hostname) +
-	'\nUsername: '.yellow + String(os.userInfo().username) +
-	'\nHomeDir: '.yellow + String(os.userInfo().homedir) +
-	'\nPlatform: '.yellow + String(os.platform) +
-	'\nRelease: '.yellow + String(os.release) +
-	'\nArch: '.yellow + String(os.arch) +
-	'\n******************************************'.green + '\n' + MessagePrompt_P.yellow + '\n' + MessagePrompt_F.blue + '\n';
-	fs.writeFile(logFile, data, function (err) {
-		if (err) log.error(String(err).red);
-		log.transports.file.file = logFile;
-		log.debug('Log creado: '.cyan + logFile.yellow);
-		log.info()
+
+function getMacAndIp(){
+
+	return new Promise((resolve, reject) => {
+		var macwifi = false;
+		Object.keys(ifaces).forEach(function (ifname) {
+			ifaces[ifname].forEach(function (iface) {
+				if ('IPv4' !== iface.family || iface.internal !== false) {
+					// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+					return;
+				}
+				log.debug('-------------------------------------------------------------'.blue);
+				// this interface has only one ipv4 adress
+				
+				if(macwifi == false){
+					var matchEth = ifname.match(/Ethernet/g);
+					var matchLAN = ifname.match(/Wi-Fi/g);
+					
+					if (matchLAN == null ){
+						if (matchEth != null ) {
+							var matchvEth = ifname.match(/vEthernet/g);
+							if(matchvEth == null){
+								iplocal = iface.address;
+								log.debug('Intefaz:'.magenta, ifname);
+								log.debug('IP Local:'.yellow, iplocal);
+		
+								if(String(iface.mac) == '00:09:0f:fe:00:01'){
+									log.debug('Macaddres - Virtual VPN'.yellow, iface.mac);
+								}else{
+									mac = iface.mac;
+									log.debug('MacAddress:'.yellow, mac);
+								}
+							}
+						}
+					}else{
+						iplocal = iface.address;
+						log.debug('Intefaz:'.magenta, ifname);
+						log.debug('IP Local:'.yellow, iplocal);
+		
+						if(String(iface.mac) == '00:09:0f:fe:00:01'){
+							log.debug('Macaddres - Virtual VPN'.yellow, iface.mac);
+						}else{
+							mac = iface.mac;
+							log.debug('MacAddress:'.yellow, mac);
+							macwifi == true;
+						}
+					}
+				}
+			});
+		});
+		log.debug('-------------------------------------------------------------'.magenta);
+		resolve('- MacAddress obtenidas -');
 	});
 }
 
 async function validateConfig(){
+	log.debug('======================================================================================================================='.blue);
 
 	if (!fs.existsSync(ConfigPATH)) {	// check main path config
 		mkdirp(ConfigPATH);
@@ -564,38 +569,31 @@ async function validateConfig(){
 
 	if (!fs.existsSync(logFile)){
 		log.debug('Creando log'.green);
-		createLog();
-		log.debug('... Log habilitado c: ! ...'.magenta, logFile.yellow);
-		log.debug();
+		let stat = await createLog();
+		log.debug('... Log habilitado c: ! ...'.magenta, stat,logFile.yellow, '\n');
 	}else{
-		var logsize = getFilesizeInBytes(logFile);
-		var filestat = fs.statSync(logFile);
-		var fileSizeInMb = filesize(filestat.size, {round: 0});
-
+		const filestat = fs.statSync(logFile);
+		const fileSizeInMb = filesize(filestat.size, {round: 0});
 		let [size, label] = fileSizeInMb.split(' ');
-
-		log.debug('Tamaño actual del log:'.magenta, logsize, 'kB');
 		log.debug('Tamaño actual del log:'.magenta, fileSizeInMb);
 
 		if(label == 'MB'){
 			log.debug('Archivo Log en MB!');
-			if(size > 20) {
+			if(size > 30) {
 				log.debug('Archivo de log muy grande'.red);
 				fs.unlinkSync(logFile);
 				createLog();
 			}else{
-				log.debug('Archivo de log OK'.green);
+				log.debug('Archivo de log menor a 30 Mb'.green);
 			}
 		}else{
-			log.debug('Archivo Log en kB!');
-			log.debug('Archivo de Log OK'.green);
+			log.debug('Archivo Log en kB!'.green);
 		}
 		
 		log.transports.file.file = logFile;
 		log.debug('... Log habilitado c: ! ...'.magenta, logFile.yellow);
-		log.debug('');
-		log.debug('');
-		log.debug('');
+		log.debug('.');
+		
 		const dt = dateTime.create();
 		const time = dt.format('m/d/y H:M');
 		log.debug('======================================================================================================================='.blue);
@@ -603,22 +601,23 @@ async function validateConfig(){
 	}
 
 	const versionApp = app.getVersion();		
-	log.debug("-> ".green, "Version de la app:".green, versionApp.magenta);
+	log.debug("\n-> ".green, "Version de la app:".green, versionApp.magenta);
 	log.debug('------------------------------------------------------------------'.grey);
 	log.debug('Url PING:'.green, urlP.blue);
 	log.debug('Url Serv:'.green, urlL.blue);
 	
 	if (!fs.existsSync(ConfigFilejs)){
-		var data = "ping=" + urlP + ";server=" + urlL ;
+		const data = "ping=" + urlP + ";server=" + urlL ;
 		fs.writeFile(ConfigFilejs, data, function (err) {
 			if (err) log.error(String(err).red)
 			log.debug('Archivo de configuracion serv: '.cyan + ConfigFilejs.yellow);
-		})
+		});
 	}else{
 		log.debug('Archivo de configuracion de coneccion: '.cyan + ConfigFilejs.yellow);
 	}
 
-	getMacAndIp();
+	let statmac = await getMacAndIp();
+	log.debug(statmac);
 
 	if (fs.existsSync(UserFile)) {
 		fs.unlinkSync(UserFile);
@@ -629,7 +628,7 @@ async function validateConfig(){
 
 
 	if (!fs.existsSync(ConfigFile)) {
-			
+			// CAMBIO URGENTE DE ESTA FUNCION
 		macaddress.one(async function (err, mac) {
 			log.debug('Macaddress, ', mac);
 			const parametro = [{
@@ -658,7 +657,7 @@ async function validateConfig(){
 
 						start();
 
-					})
+					});
 		
 				} catch (e) {
 					log.error(String(e).red + '\nError al obtener config'.red);
@@ -667,80 +666,11 @@ async function validateConfig(){
 			}else{
 				configWindow();
 			}
-			
 		});
+
 	} else {
 		start();
 	}
-	
-
-
-	// try{
-	// 	log.debug('FS status:', statusFS);
-
-	// 	if(statusFS["envialog"] == true){
-	// 		macaddress.one(function (err, mac) {
-	// 			const versionApp = app.getVersion();		
-	// 			log.debug("Version de la app:", versionApp);
-	// 			log.debug("MacAddress del equipo:", mac);
-	// 			log.debug("Enviando log");
-	// 			// ENVIR LOG
-	// 			log.debug("Borrando log");
-	// 			fs.unlinkSync(logFile);
-	// 			app.relaunch();
-	// 			app.quit();
-	// 		});
-	// 	}else{	
-	// 		macaddress.one(function (err, mac) {
-	// 			const versionApp = app.getVersion();
-	// 			log.debug("Version de la app:".yellow, versionApp);
-	// 			log.debug("MacAddress del equipo:".yellow, mac);
-	// 		})
-			
-	// 		log.debug("Borrando log");
-	// 		if(statusFS["ConfigServ"] == true) {
-	// 			log.debug('Servidor configFile ->', ConfigFilejs);
-	// 			try {
-	// 				const readInterface = readline.createInterface({
-	// 					input: fs.createReadStream(ConfigFilejs),
-	// 					output: process.stdout,
-	// 					console: false
-	// 				});
-			
-	// 				try {
-	// 					readInterface.on('line', function (line) {
-	// 						let [confP, confS] = line.split(';');
-	// 						let [x, IPP] = confP.split('=');
-	// 						let [z, IPS] = confS.split('=');
-	// 						urlP = IPP;
-	// 						urlL = IPS;
-	// 						log.info('IP del Pruebas Internet: ', urlP.yellow);
-	// 						log.info('IP del Servidor: ', urlL.yellow);			
-	// 						start();
-	// 					});	
-	// 				} catch (e) {
-	// 					log.error(String(e).red);
-	// 					log.silly('');
-	// 					urlL = null;
-	// 					urlP = null;
-	// 					errorConfig('No se pudo leer la configuracion de la aplicación');
-	// 				}
-	// 			} catch (e) {
-	// 				log.error(String(e).red);
-	// 				log.info('[-] ERROR al obtener la configuracio,, la aplicaicon se reiniciará');
-	// 				log.silly('');
-	// 				errorConfig('No se pudo leer la configuracion de la aplicación');
-	// 			}
-	// 		}
-	// 		if(statusFS["Log"] == true) {
-	// 			log.transports.file.file = logFile;
-	// 			log.debug('Regirigiendo log...');
-	// 		}	
-	// 	}
-	// }catch(e){
-	// 	errorConfig('No se pudo leer la configuracion de la aplicación');
-	// 	log.error(String(e));
-	// }
 }
 
 

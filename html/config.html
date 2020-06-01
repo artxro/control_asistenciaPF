@@ -61,62 +61,8 @@
 	</div>
 
 	<script type="text/javascript">
-		const $ = require('jquery');
-		const colors = require('colors');
-		const macaddress = require('macaddress');
-		const ipc = require('electron').ipcRenderer;
-		const Cry = require('cryptr');
-		const log = require('electron-log');
-		const request = require('request');
-		const os = require('os');
-		const fs = require('fs');
-		const base64 = require('base-64');
-		const hash = require('sha256');
-		const exec = require('child_process').exec;
-		const mkdirp = require('mkdirp');
-		const dateTime = require('node-datetime');
-
-		const nombrepattern = "[0-9]{1,9}$"
-		const jw = 'MGJsaXZpYXQzIw=='
 
 
-		const ConfigPATH = os.homedir + '/.config/Control-Asistencia';
-		const ConfigFile = ConfigPATH + '/config';
-		const logFile = ConfigPATH + '/app.log'
-		const ConfigFilejs = ConfigPATH + '/conect.conf';
-
-		log.debug('Redirigiendo log'.cyan + ' ---> '.magenta + logFile.yellow)
-		log.transports.file.file = logFile
-
-
-        const readline = require('readline');
-        
-        try {
-            const readInterface = readline.createInterface({
-                input: fs.createReadStream(ConfigFilejs),
-                output: process.stdout,
-                console: false
-            });    
-            try{				
-                readInterface.on('line', function (line) {
-                    let [confP, confS] = line.split(';');
-                    let [x, IPP] = confP.split('=');
-                    let [z, IPS] = confS.split('=');
-                    urlP = IPP; 
-                    urlL = IPS;
-                });
-            }catch{
-                urlL = null;
-                urlP = null;
-            }
-    
-        } catch (e) {
-            log.error(String(e).red);
-            log.info('[-] ERROR al obtener la configuracio,, la aplicaicon se reiniciará');
-            log.silly('');
-            urlL = null;
-            urlP = null;
-        }
 		function checkInput(idInput, pattern) {
 			switch (pattern) {
 				case 'sucursal':

@@ -28,19 +28,19 @@
 			background-color: #f3f4f5;
       		box-sizing: border-box;
 		}    
-  #notification {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  width: 200px;
-  padding: 20px;
-  border-radius: 5px;
-  background-color: white;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-}
-.hidden {
-  display: none;
-}
+		#notification {
+		position: fixed;
+		bottom: 20px;
+		left: 20px;
+		width: 200px;
+		padding: 20px;
+		border-radius: 5px;
+		background-color: white;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+		}
+		.hidden {
+		display: none;
+		}
 	</style>
 
 </head>
@@ -173,11 +173,12 @@
 </body>
 <script>
 	$('#notification').hide()
- const version = document.getElementById('version');
+	 const version = document.getElementById('version');
+	 log.debug(version);
 
 		ipcRenderer.send('app_version');
 		ipcRenderer.on('app_version', (event, arg) => {
-			console.log('::: ', arg)
+			log.debug('::: ', arg)
 			ipcRenderer.removeAllListeners('app_version');
 			version.innerText = ' - Version ' + arg.version;
 		});
@@ -186,14 +187,14 @@
 		const restartButton = document.getElementById('restart-button');
 
 		ipcRenderer.on('update_available', () => {
-			console.log('Update Avaiable');
+			log.debug('Update Avaiable');
 			$('#notification').show()
 			ipcRenderer.removeAllListeners('update_available');
 			message.innerText = 'Nueva actualización disponible, Descargando...';
 			// notification.classList.remove('hidden');
 		});
 		ipcRenderer.on('update_downloaded', () => {
-			console.log('Descargando app');
+			log.debug('Descargando app');
 			ipcRenderer.removeAllListeners('update_downloaded');
 			message.innerText = 'Actualizacion Descargada. Se instalara al reiniciar, ¿Desea reiniciar ahora?';
 			restartButton.classList.remove('hidden');
@@ -203,11 +204,11 @@
 		function closeNotification() {
 			$('#notification').hide()
 			notification.classList.add('hidden');
-			console.log('App notification hidden');
+			log.debug('App notification hidden');
 		}
 
 		function restartApp() {
-			console.log('Restarting');
+			log.debug('Restarting');
 			ipcRenderer.send('restart_app');
         }
         

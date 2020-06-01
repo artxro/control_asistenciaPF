@@ -1,21 +1,25 @@
-const $ = require('jquery');
-const colors = require('colors');
-const macaddress = require('macaddress');
-const ipc = require('electron').ipcRenderer;
-const Cry = require('cryptr');
 const log = require('electron-log');
-const request = require('request');
-const os = require('os');
-const fs = require('fs');
 const base64 = require('base-64');
 const hash = require('sha256');
-const exec = require('child_process').exec;
-const mkdirp = require('mkdirp');
+const colors = require('colors');
+const $ = require('jquery');
 const dateTime = require('node-datetime');
+const ipc = require('electron').ipcRenderer;
+
+const os = require('os');
+const fs = require('fs');
+
+const exec = require('child_process').exec;
+const macaddress = require('macaddress');
+const mkdirp = require('mkdirp');
+const Cry = require('cryptr');
 const { ipcRenderer } = require('electron');
+
 const rde = base64.decode('MGJsaXZpYXQzIw==');
-// const {autoUpdater} = require('electron-updater');
 const cry = new Cry(rde);
+
+// const {autoUpdater} = require('electron-updater');
+// const request = require('request');
 
 //---------- VARIABLES MAIN ----------------//
 const ConfigPATH = os.homedir + '/.config/Control-Asistencia';
@@ -215,95 +219,72 @@ function asyncConfig() {
 
 // -------------------------- Metodos POST ------------------------------------
 function requestPOST(metodo, parametros, timeout, timeout_r = 2000) {
-    const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
-					 \n\t<s:Body>\
-					 \n\t\t<' + metodo + ' xmlns="http://tempuri.org/">'
-    const xmlBody_F = '\n\t\t</' + metodo + '>\
-					 \n\t</s:Body>\
-					 \n</s:Envelope>'
-    let xmlAdded = ''
-    let retun_ = ''
-
-    for (i in parametros) {
-        xmlAdded += ('\n\t\t\t<' +
-            parametros[i].param +
-            '>' + parametros[i].value +
-            '</' +
-            parametros[i].param +
-            '>')
-    }
-
-    const xml = xmlBody_I + xmlAdded + xmlBody_F
-    log.debug('xml'.cyan, xml.yellow)
-    log.debug('metodo'.cyan, metodo)
-    log.debug('url'.cyan, urlL)
-
-
-    log.debug('Usando Ajax');
+    return new Promise((resolve, reject) => {
+        try {
+            log.debug('');
+            log.debug('-------------------------------------------------------------------------------------'.magenta);
+            const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
+                                \n\t<s:Body>\
+                                \n\t\t<' + metodo + ' xmlns="http://tempuri.org/">';
+            const xmlBody_F = '\n\t\t</' + metodo + '>\
+                                \n\t</s:Body>\
+                                \n</s:Envelope>';
+            let xmlAdded = '';
+            let retun_ = '';
     
-    $.ajax({
-        url: urlL,
-        type: 'POST',
-        headers: {
-            "content-type": "text/xml",
-            "SOAPAction": ("http://tempuri.org/ISolicitud/" + metodo),
-        },
-        timeout: timeout,
-        data: xml,
-        dataType: 'text',
-        success: function(data, status, xhr){
-            log.debug('--------------------------------------------------------------------');
-            log.debug(status);
-            log.debug(data);         
-            const etiquetaResult_I = '<' + metodo + 'Result' + '>'
-            const etiquetaResult_F = '</' + metodo + 'Result' + '>'
-            let [x, tmp] = data.split(etiquetaResult_I)
-            let [resp, y] = tmp.split(etiquetaResult_F)
-            retun_ = resp
-            log.debug(retun_);
-            log.debug('--------------------------------------------------------------------');
-        },
-        error: function(jqXhr, textSat, errorMes){
-            log.debug('--------------------------------------------------------------------');
-            log.debug(status);
-            log.debug(errorMes);
-        },
-        complete: function(data){
-            log.debug('Fin de la peticion')
-            log.devug('Fin AJAX')
+            for (i in parametros) {
+                xmlAdded += ('\n\t\t\t<' +
+                    parametros[i].param +
+                    '>' + parametros[i].value +
+                    '</' +
+                    parametros[i].param +
+                    '>');
+            }
+    
+            const xml = xmlBody_I + xmlAdded + xmlBody_F;
+    
+            log.debug('Datos del post'.blue);
+            log.debug('xml'.cyan, xml);
+            log.debug('metodo'.cyan, metodo);
+            log.debug('url'.cyan, ipServ);
+
+            $.ajax({
+                url: ipServ,
+                type: 'POST',
+                headers: {
+                    "content-type": "text/xml",
+                    "SOAPAction": ("http://tempuri.org/ISolicitud/" + metodo),
+                },
+                timeout: timeout,
+                data: xml,
+                dataType: 'text',
+                success: function (data, status, xhr) {
+                    log.debug(' ');
+                    log.debug('------------------ Leyendo respuesta del servidor ----------------');
+                    log.debug('Estatus de la respuesta'.cyan, status.green);
+                    log.debug('Data - xml'.cyan ,data);
+                    // log.debug(xhr);
+                    const etiquetaResult_I = '<' + metodo + 'Result' + '>'
+                    const etiquetaResult_F = '</' + metodo + 'Result' + '>'
+                    let [x, tmp] = data.split(etiquetaResult_I)
+                    let [resp, y] = tmp.split(etiquetaResult_F)
+                    retun_ = resp
+                    log.debug("Respuesta del metodo:".cyan, retun_.yellow);
+                },
+                error: function (jqXhr, textSat, errorMes) {
+                    log.debug('Estatus de la peticion', errorMes.red);
+                    reject(errorMes);
+                },
+                complete: function (data) {
+                    log.debug('-------------------------------------------------------------------------------------'.magenta);
+                    log.debug('');
+                    resolve(retun_);
+                }
+            });
+        }catch(e){
+            reject(e);
         }
     });
-    
-        
-    return new Promise(respuesta => {
-        setTimeout(() => {
-            log.debug('Respuesta: ' + retun_)
-            respuesta(retun_)
-        }, timeout_r);
-    });
-    // request({
-    //     url: urlL,
-    //     method: "POST",
-    //     headers: {
-    //         "content-type": "text/xml",
-    //         "SOAPAction": ("http://tempuri.org/ISolicitud/" + metodo),
-    //     },
-    //     body: xml,
-    //     timeout: 2000
-    // }, function (error, response, body) {
-    //     if (error) log.debug(String(error).red);
-    //     log.debug(body.yellow);
-    //     log.debug('STATUS CODE DEL SERVIDOR:'.yellow, String(response.statusCode).yellow);
-    //     if (response.statusCode == 200) {
-    //         const etiquetaResult_I = '<' + metodo + 'Result' + '>'
-    //         const etiquetaResult_F = '</' + metodo + 'Result' + '>'
-    //         let [x, tmp] = body.split(etiquetaResult_I)
-    //         let [resp, y] = tmp.split(etiquetaResult_F)
-    //         retun_ = resp
-    //     }else{
-    //         retun_ = null
-    //     }
-    // })
 }
 
 async function validarHuella(taco) {
