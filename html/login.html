@@ -7,8 +7,13 @@
 
 	<title>Control de Asistencia - Login</title>
 
-	<!-- Bootstrap core CSS -->
+	<!-- Bootstrap core CSS -->	
+	<link href="../assets/icons/FontAwesome/css/fontawesome.css" rel="stylesheet">
 	<link href="../assets/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+	<link href="../assets/icons/FontAwesome/css/brands.css" rel="stylesheet">
+	<link href="../assets/icons/FontAwesome/css/solid.css" rel="stylesheet">
+	
+	<script type="text/javascript" src="../js/login.js"></script>
 	<!-- add icon link -->
 	<link rel="icon" href="../assets/icons/png/LogoInstitucional.png" type="image/x-icon">
 
@@ -30,7 +35,6 @@
 		}
 	</style>
 
-	<script type="text/javascript" src="../js/login.js"></script>
 	<!-- Custom styles for this template -->
 	<link href="../assets/css/floating-labels.css" rel="stylesheet">
 </head>
@@ -42,21 +46,39 @@
 			<h1 class="h3 mb-3 font-weight-normal">Login</h1>
 		</div>
 
-		<div class="form-label-group">
+		<div class="form-label-group" id="divuser">
 			<input type="user" id="inputUser" class="form-control" placeholder="Usuario" required autofocus>
 			<label for="inputUser">Usuario</label>
 		</div>
 
-		<div class="form-label-group">
+		<div class="form-label-group" id="divpassd">
 			<input type="password" id="inputPassword" class="form-control" placeholder="Password" required>
 			<label for="inputPassword">Contraseña:</label>
-		</div>
+		</div
 
 		<label id="labelMessage"></label>
 
 		<button class="btn btn-lg btn-primary btn-block" type="button" id="loginbtn" onclick="login()">Entrar</button>
-		<p class="mt-5 mb-3 text-muted text-center">&copy; Grupo GarSa</p>
+	
+		<br><button id="loginhuellabtn" type="button" style="border-radius: 30px;border-radius: 30px" class="btn btn-primary btn-lg btn-block" onclick="login('huella')">Entar con Huella <i class="fas fa-fingerprint fa-lg"></i></button>
+
+		<br><label id="lblnombre" style="alin"></label>
+
+		<p class="mt-5 mb-3 text-muted text-center">Grupo GarSa</p>
+
 	</form>
 </body>
-
+<script>
+	if (typeof module === 'object') {
+		window.module = module;
+		module = undefined;
+	}
+</script>
+<script src="../js/scanner/scripts/es6-shim.js"></script>
+<script src="../js/scanner/scripts/websdk.client.bundle.min.js"></script>
+<script src="../js/scanner/scripts/fingerprint.sdk.min.js"></script>
+<script src="../js/scanner/scanner.js"></script>
+<script>
+	if (window.module) module = window.module;
+</script>
 </html>

@@ -1,10 +1,11 @@
-const log = require('electron-log');
+const { ipcRenderer } = require('electron');
+
 const base64 = require('base-64');
 const hash = require('sha256');
 const colors = require('colors');
 const $ = require('jquery');
 const dateTime = require('node-datetime');
-const ipc = require('electron').ipcRenderer;
+const log = require('electron-log');
 
 const os = require('os');
 const fs = require('fs');
@@ -13,7 +14,6 @@ const exec = require('child_process').exec;
 const macaddress = require('macaddress');
 const mkdirp = require('mkdirp');
 const Cry = require('cryptr');
-const { ipcRenderer } = require('electron');
 
 const rde = base64.decode('MGJsaXZpYXQzIw==');
 const cry = new Cry(rde);
@@ -44,7 +44,7 @@ var horaREG = null;
 
 var deviceDisconected = true;
 
-var urlL='';
+var ipServ='';
 const readline = require('readline');
 
 try {
@@ -53,16 +53,16 @@ try {
         output: process.stdout,
         console: false
     });    
-    try{				
+    try{
         readInterface.on('line', function (line) {
             let [confP, confS] = line.split(';');
             let [x, IPP] = confP.split('=');
             let [z, IPS] = confS.split('=');
             urlP = IPP; 
-            urlL = IPS;
+            ipServ = IPS;
         });
     }catch{
-        urlL = null;
+        ipServ = null;
         urlP = null;
     }
 
@@ -70,14 +70,54 @@ try {
     log.error(String(e).red);
     log.info('[-] ERROR al obtener la configuracio,, la aplicaicon se reiniciará');
     log.silly('');
-    urlL = null;
+    ipServ = null;
     urlP = null;
 }
+
+
+
+//---- AUTOUPDATE -----
+$('#notification').hide()
+const version = $(document.getElementById('version'));
+log.debug(version);
+
+ipcRenderer.send('app_version');
+ipcRenderer.on('app_version', (event, arg) => {
+    log.debug('::: ', arg)
+    ipcRenderer.removeAllListeners('app_version');
+    $('#version').text(' - Version ' + arg.version);
+});
+
+ipcRenderer.on('update_available', () => {
+    log.debug('Update Avaiable');
+    $('#notification').show();
+    ipcRenderer.removeAllListeners('update_available');
+    $('#message').text('Nueva actualización disponible, Descargando...');
+    // notification.classList.remove('hidden');
+});
+ipcRenderer.on('update_downloaded', () => {
+    log.debug('Descargando app');
+    ipcRenderer.removeAllListeners('update_downloaded');
+    $('#message').text('Actualizacion Descargada. Se instalara al reiniciar, ¿Desea reiniciar ahora?');
+    $('#restart-button').hide(); 
+    $('#notification').hide(); 
+});
+
+function closeNotification() {
+    $('#notification').hide();
+    log.debug('App notification hidden');
+}
+
+function restartApp() {
+    log.debug('Restarting');
+    ipcRenderer.send('restart_app');
+}
+
 // -------------------------- ON READY ------------------------------------
 $(document).ready(async function () {
     deviceconectesRegistro = false;
     // ------ Desarrollo -------   
-    setLOG()
+    setLOG();
     hideElements();
     getConfig()
     configStatus = await asyncConfig();
@@ -95,9 +135,30 @@ $(document).ready(async function () {
         log.error(String(e).red)
     }
 
-    //---- PRUEBAS -----
-
+    
 });
+
+function reload(extra = '') {
+    log.debug("Reiniciando app...".yellow);
+
+    $('#spinner-info').hide();
+    $('#spinner-success').hide();
+    $('#spinner-danger').hide();
+    $('#spinner-warning').show();
+
+    $('#message-info').hide();
+    $('#message-fail').hide();
+    $('#message-success').hide();
+    $('#message-warning').show();
+
+    $('#message-warning').html("<strong>Reiniciando...</strong>\u231B " + extra);
+    $("#btnreload").html('<i class="fas fa-sync-alt fa-2x fa-spin"></i>');
+
+    setTimeout(() => {
+        $('#spinner-warning').show();
+        location.reload();
+    }, 1000);
+}
 
 function fdpInfo() {
     var allReaders = fpd.getInfo();
@@ -166,15 +227,15 @@ function setLOG() {
         if (!fs.existsSync(logFile)) {
             fs.writeFile(logFile, specs, function (err) {
                 if (err) log.error(String(err).red)
-                log.debug('Archivo de log creado: ' + logFile.yellow)
-            })
-            log.transports.file.file = logFile
+                log.debug('Archivo de log creado: ' + logFile.yellow);
+            });
+            log.transports.file.file = logFile;
         } else {
-            log.debug('Redirigiendo log' + ' ---> '.magenta + logFile.yellow)
-            log.transports.file.file = logFile
+            log.debug('Redirigiendo log' + ' ---> '.magenta + logFile.yellow);
+            log.transports.file.file = logFile;
         }
-    } catch (e) {
-        log.error(String(e).red)
+    } catch (err) {
+        log.error(String(err).red);
     }
 }
 
@@ -788,7 +849,7 @@ function statusSensor(stat){
             // sensorstatcount += 1;
             break;
         default:
-            bresk;
+            break;
 
     }
 }

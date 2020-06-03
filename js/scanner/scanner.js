@@ -1,4 +1,5 @@
 var status_captura = false;
+var loginHuella= false;
 
 var myVal = ""; // Drop down selected value of reader 
 var disabled = true;
@@ -127,9 +128,14 @@ function sampleAcquired(s){
                 }
                 log.debug('Tipo de adquicision: ' + enrollment);
             }else{
-                onStop();
-                validarHuella(huella);
+                if(loginHuella==true){
+                    loginConHuella(huella);
+                }else{
+                    onStop();
+                    validarHuella(huella);
+                }
             }
+
         }
         else{
             alert("Format Error");

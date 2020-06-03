@@ -45,10 +45,10 @@ const taco = base64.decode('MGJsaXZpYXQzIw==');
 const cry = new Cyr(taco);
 
 //------------IP SERVICIO------------------//
-const urlP = 'wshuella.prestamofeliz.com.mx';
-const urlL = 'http://wshuella.prestamofeliz.com.mx:9045/WSH.svc';
-// const urlP = 'prestamofeliz.com.mx';
-// const urlL = 'http://workpc:45455/WSH.svc';
+// const urlP = 'wshuella.prestamofeliz.com.mx';
+const urlP = 'google.com';
+// const urlL = 'http://wshuella.prestamofeliz.com.mx:9045/WSH.svc';
+const urlL = 'http://localhost:2762/WSH.svc';
 
 
 
@@ -128,7 +128,6 @@ function requestPOST(metodo, parametros, timeout, timeout_r = 2000) {
         }
     });
 }
-
 
 function getFilesizeInBytes(filename) {
 	return new Promise((resolve, reject) => {
@@ -214,7 +213,7 @@ function configWindow() {
 
 	configInicialWin.loadFile('html/config.html');
 	
-	configInicialWin.webContents.openDevTools();
+	// configInicialWin.webContents.openDevTools();
 
 	let menuinit = Menu.buildFromTemplate([{
 		label: 'Menú',
@@ -235,6 +234,7 @@ function createWindow() {
 	// Nuevo browser window.
 	mainWindow = new BrowserWindow({
 		webPreferences: {
+			enableRemoteModule: true,
 			webSecurity: false,
 			nodeIntegrationInWorker: true,
 			webviewTag: true,
@@ -245,7 +245,7 @@ function createWindow() {
 		icon: path.join(__dirname, '/assets/icons/png/LogoInstitucional.png')
 	})
 
-	mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
+	// mainWindow.webContents.openDevTools() //Habilita herramientas de desarrollador
 	
 	// Leer index.html
 	mainWindow.loadFile('index.html');
@@ -287,7 +287,7 @@ function createWindow() {
 }
 
 //-------------------------------------------------- Login ----------------------------------------------------------//
-let winlogin
+let winlogin;
 
 function login() {
 	winlogin = new BrowserWindow({
@@ -299,12 +299,12 @@ function login() {
 		show: false,
 		width: 390,
 		height: 560,
-		icon: path.join(__dirname, '/assets/icon/png/LogoInstitucional.png')
+		icon: path.join(__dirname, '/assets/icons/png/LogoInstitucional.png')
 	});
 
-	winlogin.loadFile('/html/login.html');
+	winlogin.loadFile('html/login.html');
 	
-	winlogin.webContents.openDevTools();				//Habilita herramientas de desarrollador
+	// winlogin.webContents.openDevTools();				//Habilita herramientas de desarrollador
 	
 	winlogin.setMenuBarVisibility(false);
 	
@@ -330,7 +330,7 @@ function closeLogin() {
 
 //-------------------------------------------------- Empleados Window ----------------------------------------------------------//
 
-let empleadoswin
+let empleadoswin;
 var empleados_open = false;
 
 function empleados() {
@@ -343,18 +343,14 @@ function empleados() {
 		show: false,
 		width: 1500,
 		height: 800,
-		icon: path.join(__dirname, '/assets/icon/png/LogoInstitucional.png')
+		icon: path.join(__dirname, '/assets/icons/png/LogoInstitucional.png')
 	});
 
 	empleadoswin.loadFile('html/empleados.html');
 
-	empleadoswin.setMenu(menu);
+	// empleadoswin.webContents.openDevTools();
 
-	empleadoswin.webContents.openDevTools();
-
-	var menu = Menu.buildFromTemplate([{
-		label: 'Menú',
-	}]);
+	empleadoswin.setMenuBarVisibility(false);
 	
 	empleadoswin.once('ready-to-show', () => {
 		empleados_open = true;
@@ -399,7 +395,7 @@ function conEmpleados() {
 	}]);
 	conEmpleadoswin.setMenu(menu);
 
-	conEmpleadoswin.webContents.openDevTools();
+	// conEmpleadoswin.webContents.openDevTools();
 	
 	conEmpleadoswin.once('ready-to-show', () => {
 		conEmpleadoswin.show();
@@ -412,7 +408,7 @@ function conEmpleados() {
 
 //-------------------------------------------------- Sucursales ----------------------------------------------------------//
 
-let sucursaleswin
+let sucursaleswin;
 
 function sucursales() {
 	sucursaleswin = new BrowserWindow({
@@ -716,12 +712,12 @@ ipcMain.on('entry-accepted', (event, arg) => {
 	if (arg = 'ping') {
 
 		if (empleadosBool[0] == true) {
-			empleados()
-			winlogin.close()
+			empleados();
+			winlogin.close();
 		}
 		if (empleadosBool[1] == true) empleadoswin.focus()
 	}
-})
+});
 ipcMain.on('BackBtn', (event, arg) => {
 	log.debug('Borrando configuracion del usuario')
 	try {
@@ -734,7 +730,7 @@ ipcMain.on('BackBtn', (event, arg) => {
 	app.relaunch();
 	app.quit();
 
-})
+});
 ipcMain.on('request-mainprocess-action', (event, arg) => {
 	switch (arg) {
 		case 'loading':
@@ -744,7 +740,7 @@ ipcMain.on('request-mainprocess-action', (event, arg) => {
 			aboutWindow.hide()
 			break
 	}
-})
+});
 ipcMain.on('Admin-css', (event, arg) => {
 	switch (arg) {
 		case '4vanc3#':
@@ -752,11 +748,11 @@ ipcMain.on('Admin-css', (event, arg) => {
 			empleadosAdmin()
 			break
 	}
-})
+});
 ipcMain.on('config', (event, arg) => {
 	app.relaunch()
 	app.quit()
-})
+});
 ipcMain.on('statusSensor', (event, arg) => {
 	log.debug('MAIN - sensor status');
 
@@ -771,7 +767,7 @@ ipcMain.on('statusSensor', (event, arg) => {
 	// }
 	// app.relaunch();
 	// app.quit();
-})
+});
 ipcMain.on('app_version', (event) => {
 	log.debug('Checking for updates-------');
 	autoUpdater.checkForUpdatesAndNotify();
@@ -782,14 +778,68 @@ ipcMain.on('app_version', (event) => {
 ipcMain.on('restart_app', () => {
 	autoUpdater.quitAndInstall();
 });
+ipcMain.on('login', (event, arg, user, credenciales) => {
+	try{
+		switch (arg){
+			case 'acept':
+				var cookie = { 
+					name: user, 
+					value: credenciales,    
+					url: "http://login.com"
+				}
+
+				log.debug(cookie);
+				session.defaultSession.cookies.set(cookie)
+				.then(() => {
+					log.debug("Cookies agregadas para la sesion");
+					session.defaultSession.cookies.get({ url: 'http://login.com' })
+						.then((cookies) => {
+							log.debug('leyendo cookies de session')
+							log.debug(cookies);
+							createMainWindow();
+							loginWin.close();
+						}).catch((error) => {
+							log.error(error);
+					});
+				}, (error) => {
+					log.error("Error al agregar la cookie");
+					log.error(error);
+				});
+				break;
+			case 'goBack':
+				log.warn('Reiniciando la aplicacion.'.yellow.bold);
+				app.relaunch();
+				app.quit();
+				break;
+			default:
+				app.quit();
+				break;
+		}	
+	}catch(err){
+		log.error("Error al generar la cookie");
+		log.error(err);
+	}
+});
+ipcMain.on('credenciales', (event, arg) =>{
+	try{
+		session.defaultSession.cookies.get({ url: 'http://login.com' })
+		.then((cookies) => {
+			event.returnValue = cookies;
+		}).catch((error) => {
+			log.error(error);
+		});
+	} catch (err) {
+		log.error(err);
+	}
+});
 
 //----------------------------------- AUTOUPDATER SECCION -----------------------------------
 autoUpdater.setFeedURL({ provider: 'github'
-, owner: 'artxro'
+, owner: 'whorob0t'
 , repo: 'control_asistenciaPF'
 , token: '09276baef6c34bbbc9a145030f6fc69f6fc7cd36'
 , private: true });
-autoUpdater.allowDowngrade = false
+autoUpdater.allowDowngrade = false;
 autoUpdater.on('update-available', () => {
 	mainWindow.webContents.send('update_available');
 });
@@ -851,14 +901,14 @@ function errorSensor(details) {
 	}
 	dialog.showMessageBox(null, options, (response) => {
 		log.debug('Opcion Elegida:'.magenta, response);
-	})
+	});
 }
 
 
 //----------------------------------------- App funtions escencials ------------------------------------//
 app.on('ready', () => {
 	validateConfig();
-})
+});
 app.on('window-all-closed', () => {
 	try {
 		if (fs.existsSync(UserFile)) {
@@ -871,4 +921,4 @@ app.on('window-all-closed', () => {
 		log.info('#####################################\nNo se borraron los archivos'.red)
 	}
 	app.quit()
-})
+});
