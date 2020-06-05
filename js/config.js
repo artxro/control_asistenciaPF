@@ -10,7 +10,6 @@ const fs = require('fs');
 const base64 = require('base-64');
 const hash = require('sha256');
 const exec = require('child_process').exec;
-const mkdirp = require('mkdirp');
 const dateTime = require('node-datetime');
 
 const nombrepattern = "[0-9]{1,9}$"

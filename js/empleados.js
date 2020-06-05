@@ -10,6 +10,7 @@ const fs = require('fs')
 const base64 = require('base-64')
 const hash = require('sha256')
 const exec = require('child_process').exec
+const mkdirp = require('mkdirp');
 
 const ConfigPATH = os.homedir + '/.config/Control-Asistencia';
 const ConfigFile = ConfigPATH + '/config';
@@ -18,7 +19,6 @@ const ConfigFilejs = ConfigPATH + '/conect.conf'
 
 const rde = base64.decode('MGJsaXZpYXQzIw==');
 const cry = new Cry(rde);
-const mkdirp = require('mkdirp');
 
 
 //   Variables 

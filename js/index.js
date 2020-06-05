@@ -45,6 +45,7 @@ var horaREG = null;
 var deviceDisconected = true;
 
 var ipServ='';
+var urlP = '';
 const readline = require('readline');
 
 try {
@@ -114,12 +115,12 @@ function restartApp() {
 }
 
 // -------------------------- ON READY ------------------------------------
+getConfig();
 $(document).ready(async function () {
     deviceconectesRegistro = false;
     // ------ Desarrollo -------   
     setLOG();
     hideElements();
-    getConfig()
     configStatus = await asyncConfig();
     log.debug(configStatus);
     log.debug('');
