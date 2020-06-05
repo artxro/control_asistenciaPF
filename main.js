@@ -45,10 +45,10 @@ const taco = base64.decode('MGJsaXZpYXQzIw==');
 const cry = new Cyr(taco);
 
 //------------IP SERVICIO------------------//
-// const urlP = 'wshuella.prestamofeliz.com.mx';
-const urlP = 'google.com';
-// const urlL = 'http://wshuella.prestamofeliz.com.mx:9045/WSH.svc';
-const urlL = 'http://localhost:2762/WSH.svc';
+const urlP = 'wshuella.prestamofeliz.com.mx';
+const urlL = 'http://wshuella.prestamofeliz.com.mx:9045/WSH.svc';
+// const urlP = 'google.com';
+// const urlL = 'http://localhost:2762/WSH.svc';
 
 
 
@@ -837,7 +837,7 @@ ipcMain.on('credenciales', (event, arg) =>{
 autoUpdater.setFeedURL({ provider: 'github'
 , owner: 'whorob0t'
 , repo: 'control_asistenciaPF'
-, token: '09276baef6c34bbbc9a145030f6fc69f6fc7cd36'
+, token: '406be3a2715fd973d0e425b6c722014e256a2bd9'
 , private: true });
 autoUpdater.allowDowngrade = false;
 autoUpdater.on('update-available', () => {
