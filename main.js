@@ -834,11 +834,11 @@ ipcMain.on('credenciales', (event, arg) =>{
 });
 
 //----------------------------------- AUTOUPDATER SECCION -----------------------------------
-autoUpdater.setFeedURL({ provider: 'github'
-, owner: 'whorob0t'
-, repo: 'control_asistenciaPF'
-, token: '406be3a2715fd973d0e425b6c722014e256a2bd9'
-, private: true });
+// autoUpdater.setFeedURL({ provider: 'github'
+// , owner: 'artxro'
+// , repo: 'control_asistenciaPF'
+// , token: '7fc6252bb510f7a36ecdfd77df0e10a81a96ebb8'
+// , private: true });
 autoUpdater.allowDowngrade = false;
 autoUpdater.on('update-available', () => {
 	mainWindow.webContents.send('update_available');
