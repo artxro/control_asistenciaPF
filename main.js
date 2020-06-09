@@ -92,14 +92,18 @@ function requestPOST(metodo, parametros, timeout, timeout_r=2000, debug=true) {
         body: xml,
         timeout: timeout
     }, function (error, response, body) {
+		try{
         if(debug == true) log.debug(body)
-        if(response.statusCode == 200){
-            const etiquetaResult_I = '<' + metodo + 'Result' + '>'
-            const etiquetaResult_F = '</' + metodo + 'Result' + '>'
-            let [x, tmp] = body.split(etiquetaResult_I)
-            let [resp, y] = tmp.split(etiquetaResult_F)
-			retun_ = resp
-        }
+			if(response.statusCode == 200){
+				const etiquetaResult_I = '<' + metodo + 'Result' + '>'
+				const etiquetaResult_F = '</' + metodo + 'Result' + '>'
+				let [x, tmp] = body.split(etiquetaResult_I)
+				let [resp, y] = tmp.split(etiquetaResult_F)
+				retun_ = resp
+			}
+		}catch(err){
+			log.error(String(err).red);
+		}
     })
 
     return new Promise(respuesta => {
@@ -617,7 +621,7 @@ async function validateConfig(){
 			const respuesta = await requestPOST(metodo, parametro, timeout);
 			
 			var encryconf;
-			if (respuesta != 'null') {
+			if (String(respuesta) != 'null') {
 				try {
 					log.debug('Leyendo configuración obtenida del servidor'.green);
 					let [idE, idS] = respuesta.split(',');
@@ -639,9 +643,21 @@ async function validateConfig(){
 				} catch (e) {
 					log.error(String(e).red + '\nError al obtener config'.red);
 					log.debug('Archivo de configuracion NO Sucursal creado: '.cyan + ConfigFile.red);
+					configWindow();
 				}
-			}else{
-				configWindow();
+			}else{	
+				log.debug('Revisando coneccion al servidor'.blue, urlP.yellow);
+				log.debug('PING');
+				ping.sys.probe(urlP, function(isAlive){
+					if(isAlive == true){
+						log.debug('PONG');
+						log.debug('Iniciando aplicacion'.yellow);
+						configWindow();
+					}else{
+						log.debug('Server death');
+						errorConServer();
+					}
+				});
 			}
 		});
 
