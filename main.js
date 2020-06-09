@@ -16,7 +16,7 @@ const os = require('os');
 const mkdirp = require('mkdirp');
 const path = require('path');
 const url = require('url');
-
+const request = require('request');
 // const readline = require('readline');
 
 require('electron-reload')(__dirname); // Desarrollo stuff Actualizacion de pantalla automatica en cambios 
@@ -46,9 +46,9 @@ const cry = new Cyr(taco);
 
 //------------IP SERVICIO------------------//
 const urlP = 'wshuella.prestamofeliz.com.mx';
-const urlL = 'http://wshuella.prestamofeliz.com.mx:9045/WSH.svc';
+const ipServ = 'http://wshuella.prestamofeliz.com.mx:9045/WSH.svc';
 // const urlP = 'google.com';
-// const urlL = 'http://localhost:2762/WSH.svc';
+// const ipServ = 'http://localhost:2762/WSH.svc';
 
 
 
@@ -60,72 +60,53 @@ const MessagePrompt_F = 'd88888b d88888b db      d888888b d88888D \n88      88  
 //---------------------------------------------- Funciones MAIN --------------------
 
 
-function requestPOST(metodo, parametros, timeout, timeout_r = 2000) {
-    return new Promise((resolve, reject) => {
-        try {
-            log.debug('');
-            log.debug('-------------------------------------------------------------------------------------'.magenta);
-            const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
-                                \n\t<s:Body>\
-                                \n\t\t<' + metodo + ' xmlns="http://tempuri.org/">';
-            const xmlBody_F = '\n\t\t</' + metodo + '>\
-                                \n\t</s:Body>\
-                                \n</s:Envelope>';
-            let xmlAdded = '';
-            let retun_ = '';
-    
-            for (i in parametros) {
-                xmlAdded += ('\n\t\t\t<' +
-                    parametros[i].param +
-                    '>' + parametros[i].value +
-                    '</' +
-                    parametros[i].param +
-                    '>');
-            }
-    
-            const xml = xmlBody_I + xmlAdded + xmlBody_F;
-    
-            log.debug('Datos del post'.blue);
-            log.debug('xml'.cyan, xml);
-            log.debug('metodo'.cyan, metodo);
-            log.debug('url'.cyan, ipServ);
+function requestPOST(metodo, parametros, timeout, timeout_r=2000, debug=true) {
+    const xmlBody_I = '\n<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\
+					 \n\t<s:Body>\
+					 \n\t\t<' + metodo + ' xmlns="http://tempuri.org/">'
+    const xmlBody_F = '\n\t\t</' + metodo + '>\
+					 \n\t</s:Body>\
+					 \n</s:Envelope>'
+    let xmlAdded = ''
+    let retun_ = null
 
-            $.ajax({
-                url: ipServ,
-                type: 'POST',
-                headers: {
-                    "content-type": "text/xml",
-                    "SOAPAction": ("http://tempuri.org/ISolicitud/" + metodo),
-                },
-                timeout: timeout,
-                data: xml,
-                dataType: 'text',
-                success: function (data, status, xhr) {
-                    log.debug(' ');
-                    log.debug('------------------ Leyendo respuesta del servidor ----------------');
-                    log.debug('Estatus de la respuesta'.cyan, status.green);
-                    log.debug('Data - xml'.cyan ,data);
-                    // log.debug(xhr);
-                    const etiquetaResult_I = '<' + metodo + 'Result' + '>'
-                    const etiquetaResult_F = '</' + metodo + 'Result' + '>'
-                    let [x, tmp] = data.split(etiquetaResult_I)
-                    let [resp, y] = tmp.split(etiquetaResult_F)
-                    retun_ = resp
-                    log.debug("Respuesta del metodo:".cyan, retun_.yellow);
-                },
-                error: function (jqXhr, textSat, errorMes) {
-                    log.debug('Estatus de la peticion', errorMes.red);
-                    reject(errorMes);
-                },
-                complete: function (data) {
-                    log.debug('-------------------------------------------------------------------------------------'.magenta);
-                    log.debug('');
-                    resolve(retun_);
-                }
-            });
-        }catch(e){
-            reject(e);
+    for (i in parametros) {
+        xmlAdded += ('\n\t\t\t<' +
+            parametros[i].param +
+            '>' + parametros[i].value +
+            '</' +
+            parametros[i].param +
+            '>')
+    }
+
+	const xml = xmlBody_I + xmlAdded + xmlBody_F
+	if(debug == true) log.debug(xml.yellow)
+
+    request({
+        url: ipServ,
+        method: "POST",
+        headers: {
+            "content-type": "text/xml",
+            "SOAPAction": ("http://tempuri.org/ISolicitud/" + metodo),
+        },
+        body: xml,
+        timeout: timeout
+    }, function (error, response, body) {
+        if(debug == true) log.debug(body)
+        if(response.statusCode == 200){
+            const etiquetaResult_I = '<' + metodo + 'Result' + '>'
+            const etiquetaResult_F = '</' + metodo + 'Result' + '>'
+            let [x, tmp] = body.split(etiquetaResult_I)
+            let [resp, y] = tmp.split(etiquetaResult_F)
+			retun_ = resp
         }
+    })
+
+    return new Promise(respuesta => {
+        setTimeout(() => {
+            if(debug == true) log.debug('\n\nRespuesta: ' + retun_)
+            respuesta(retun_)
+        }, timeout_r);
     });
 }
 
@@ -600,10 +581,10 @@ async function validateConfig(){
 	log.debug("\n-> ".green, "Version de la app:".green, versionApp.magenta);
 	log.debug('------------------------------------------------------------------'.grey);
 	log.debug('Url PING:'.green, urlP.blue);
-	log.debug('Url Serv:'.green, urlL.blue);
+	log.debug('Url Serv:'.green, ipServ.blue);
 	
 	if (!fs.existsSync(ConfigFilejs)){
-		const data = "ping=" + urlP + ";server=" + urlL ;
+		const data = "ping=" + urlP + ";server=" + ipServ ;
 		fs.writeFile(ConfigFilejs, data, function (err) {
 			if (err) log.error(String(err).red)
 			log.debug('Archivo de configuracion serv: '.cyan + ConfigFilejs.yellow);

@@ -40,6 +40,22 @@ var enrollment = false;
 var registro = null;
 
 
+try {
+    fs.readFile(ConfigFile, 'utf8', (err, data) => {
+        const decryptedString = cry.decrypt(data)
+        let [idE, idS] = decryptedString.split(',')
+        let [a, idEmpresa] = idE.split(':')
+        let [b, idSucursal] = idS.split(':')
+        empresaID = idEmpresa
+        sucursalID = idSucursal
+        log.debug('************ LOGIN ***************'.red);
+        log.debug('Empresa:'.cyan, String(empresaID).yellow, 'Sucursal:'.cyan, String(sucursalID).yellow);
+    });
+
+} catch (e) {
+    log.error('Error en la configuracion')
+}
+
 
 try {
     const readInterface = readline.createInterface({
@@ -67,23 +83,6 @@ try {
     ipServ = null;
     urlP = null;
 }
-
-try {
-    fs.readFile(ConfigFile, 'utf8', (err, data) => {
-        const decryptedString = cry.decrypt(data)
-        let [idE, idS] = decryptedString.split(',')
-        let [a, idEmpresa] = idE.split(':')
-        let [b, idSucursal] = idS.split(':')
-        empresaID = idEmpresa
-        sucursalID = idSucursal
-    })
-
-} catch (e) {
-    log.error('Error en la configuracion')
-}
-
-log.debug('************ LOGIN ***************'.red);
-log.debug('Empresa:'.cyan, String(empresaID).yellow, 'Sucursal:'.cyan, String(sucursalID).yellow);
 
 function requestPOST(metodo, parametros, timeout, timeout_r = 2000) {
     return new Promise((resolve, reject) => {
